@@ -18,6 +18,8 @@ def get_session(keyspace):
 
     model.create_schema(session)
 
+    return session
+
 def main():
     ...
     
