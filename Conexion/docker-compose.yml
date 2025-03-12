@@ -1,0 +1,17 @@
+version: '3'
+services:
+  cassandra:
+    image: cassandra:4.0
+    ports:
+      - "9042:9042"
+    environment:
+      # Nombre del cluster de Cassandra que tienen en Docker
+      - CASSANDRA_CLUSTER_NAME=cassandradb
+
+  mongodb:
+    image: mongo:6.0
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=example
