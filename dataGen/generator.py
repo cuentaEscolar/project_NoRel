@@ -1,7 +1,8 @@
 # Abrir la consola de VSCode en el directorio 'dataGen' y ejecutar el comando:
 # python generator.py
 # De esta manera, los archivos se guardarán en el directorio donde está este código
-# Si se hace click en el botón de ejecutar, los archivos se guardarán en el directorio raíz de VSCode
+# Si se hace click en el botón de ejecutar de VSCode, los archivos se guardarán en el directorio raíz de VSCode
+# Y tendrán que ser copiados a la carpeta correcta
 
 import csv
 # Generamos muchos datos aleatorios, esto es muy necesario para el proyecto
@@ -12,6 +13,7 @@ from datetime import datetime, timedelta
 
 import os
 import uuid
+import json  # Generamos JSON en vez de CSV para Dgraph
 
 # De esta variable depende el número de datos creados
 NUM_CASAS = 100 
@@ -85,7 +87,7 @@ def generar_locacion_aleatoria():
 # Generación de datos para MongoDB (configuración y metadata)
 def generar_datos_mongodb():
     # Archivo para dispositivos
-    with open("mongodb_dispositivos.csv", "w", newline="", encoding="utf-8") as f:
+    with open("mongodb_dispositivos.csv", "w", newline="", encoding="utf-8") as f: # Importante el utf-8 o todo se va al carajo
         writer = csv.writer(f)
         # Crear columnas
         writer.writerow(["id_dispositivo", "id_casa", "tipo_dispositivo", "modelo",
@@ -196,158 +198,235 @@ def generar_datos_mongodb():
 # Generación de datos para Dgraph (relaciones entre dispositivos)
 def generar_datos_dgraph():
 
-    # Archivo para nodos (dispositivos)
-    with open("dgraph_nodos.csv", "w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        # Crear columnas
-        writer.writerow(["id_nodo", "id_dispositivo", "tipo_nodo", "nombre_nodo", "id_casa"])
-        
-        # Leer dispositivos desde el archivo para MongoDB
-        dispositivos = [] # Inicializar una lista vacía
-        with open("mongodb_dispositivos.csv", "r", newline="", encoding="utf-8") as f_disp:
-            reader = csv.DictReader(f_disp) # Leer el archivo como un diccionario
-            for row in reader:
-                # Añadir cada dispositivo a la lista 
-                dispositivos.append((row["id_dispositivo"], row["tipo_dispositivo"], row["id_casa"]))
-        
-        nodos = [] # Inicializar una lista vacía
-        for id_dispositivo, tipo_dispositivo, id_casa in dispositivos: # Para cada atributo de los dispositivos
-            id_nodo = str(uuid.uuid4()) # Crear un ID aleatorio
-            nombre_nodo = f"{tipo_dispositivo.capitalize()}_{id_casa}_{id_dispositivo[:6]}" # Crear un nombre para el nodo
-            writer.writerow([id_nodo, id_dispositivo, tipo_dispositivo, nombre_nodo, id_casa]) # Escribir los datos en el archivo
-            nodos.append((id_nodo, tipo_dispositivo, id_casa)) # Añadir el nodo a la lista
+    # Contrario a las otras 2 funciones generadoras, esta produce archivos JSON en vez de CSV
+    # Si se complica mucho su uso, tengo una versión que genera CSV
+
+    # Archivo para nodos (para los dispositivos)
+    nodos_data = []  # Lista para almacenar los nodos
+    dispositivos = []  # Para los dispositivos
     
-    # Archivo para clusters
-    with open("dgraph_clusters.csv", "w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        # Crear columnas
-        writer.writerow(["id_cluster", "nombre_cluster", "tipo_cluster", "id_casa"])
+    # Leer dispositivos desde el archivo ya generado para MongoDB
+    with open("mongodb_dispositivos.csv", "r", newline="", encoding="utf-8") as f_disp:
+        reader = csv.DictReader(f_disp)  # Leer el archivo como un diccionario
+        for row in reader:
+            # Añadir cada dispositivo a la lista 
+            dispositivos.append((row["id_dispositivo"], row["tipo_dispositivo"], row["id_casa"]))
+    
+    nodos = []  # Inicializar una lista vacía para almacenar los nodos
+    for id_dispositivo, tipo_dispositivo, id_casa in dispositivos:  # Para cada atributo de los dispositivos
+        id_nodo = str(uuid.uuid4())  # Crear un ID aleatorio
+        nombre_nodo = f"{tipo_dispositivo.capitalize()}_{id_casa}_{id_dispositivo[:6]}"  # Crear un nombre para el nodo
+        # Crear la estructura del nodo en JSON y prepararlo para el archivo
+        nodo = {
+            "id_nodo": id_nodo,
+            "id_dispositivo": id_dispositivo,
+            "tipo_nodo": tipo_dispositivo,
+            "nombre_nodo": nombre_nodo,
+            "id_casa": id_casa
+        }
+        nodos_data.append(nodo)  # Añadir el nodo al JSON
+        nodos.append((id_nodo, tipo_dispositivo, id_casa))  # Añadir el nodo a la lista para uso posterior
+    
+    # Guardar nodos en archivo JSON
+    with open("dgraph_nodos.json", "w", encoding="utf-8") as f:
+        json.dump(nodos_data, f, indent=2) # indent le da la identación correcta
+    
+    # Listas para clusters
+    clusters_data = []
+    clusters = []
+    
+    for casa in range(1, NUM_CASAS + 1):
+        # Cluster por casa
+        id_cluster_casa = str(uuid.uuid4())
+        # Estructura del cluster
+        cluster_casa = {
+            "id_cluster": id_cluster_casa,
+            "nombre_cluster": f"Casa_{casa}",
+            "tipo_cluster": "casa",
+            "id_casa": casa
+        }
+        # Añadir el cluster a la lista de datos
+        clusters_data.append(cluster_casa)
+        # Añadir el cluster a la lista general
+        clusters.append((id_cluster_casa, "casa", casa))
         
-        clusters = []
-        for casa in range(1, NUM_CASAS + 1):
-            # Cluster por casa
-            id_cluster_casa = str(uuid.uuid4())
-            writer.writerow([id_cluster_casa, f"Casa_{casa}", "casa", casa])
-            clusters.append((id_cluster_casa, "casa", casa))
-            
-            # Cluster por habitación (salas)
-            habitaciones = ["sala", "cocina", "dormitorio_principal", "baño"]
-            for habitacion in habitaciones:
-                if random.random() > 0.3:  # No todas las casas tienen clusters por habitación
-                    id_cluster_hab = str(uuid.uuid4())
-                    writer.writerow([id_cluster_hab, f"{habitacion.capitalize()}_{casa}", habitacion, casa])
-                    clusters.append((id_cluster_hab, habitacion, casa))
-            
-            # Clusters funcionales
-            tipos_funcionales = ["iluminacion", "climatizacion", "seguridad", "entretenimiento"]
-            for tipo in tipos_funcionales:
-                if random.random() > 0.5:  # No todas las casas tienen todos los clusters funcionales
-                    id_cluster_func = str(uuid.uuid4())
-                    writer.writerow([id_cluster_func, f"{tipo.capitalize()}_{casa}", tipo, casa])
-                    clusters.append((id_cluster_func, tipo, casa))
+        # Cluster por habitación (salas)
+        habitaciones = ["sala", "cocina", "dormitorio_principal", "baño"]
+        # Para cada habitación
+        for habitacion in habitaciones:
+            # Si la probabilidad es mayor a 0.3, se crea un cluster para la habitación porque...
+            if random.random() > 0.3:  # No todas las casas tienen clusters por habitación
+                id_cluster_hab = str(uuid.uuid4())
+                # Estructura del cluster
+                cluster_hab = {
+                    "id_cluster": id_cluster_hab,
+                    "nombre_cluster": f"{habitacion.capitalize()}_{casa}",
+                    "tipo_cluster": habitacion,
+                    "id_casa": casa
+                }
+                # Añadir el cluster a la lista de datos
+                clusters_data.append(cluster_hab)
+                # Añadir el cluster a la lista general
+                clusters.append((id_cluster_hab, habitacion, casa))
+        
+        # Clusters funcionales
+        tipos_funcionales = ["iluminacion", "climatizacion", "seguridad", "entretenimiento"]
+        for tipo in tipos_funcionales:
+            if random.random() > 0.5:  # No todas las casas tienen todos los clusters funcionales, lo decidimos con un random
+                id_cluster_func = str(uuid.uuid4())
+                # Estructura del cluster
+                cluster_func = {
+                    "id_cluster": id_cluster_func,
+                    "nombre_cluster": f"{tipo.capitalize()}_{casa}",
+                    "tipo_cluster": tipo,
+                    "id_casa": casa
+                }
+                # Lista de datos
+                clusters_data.append(cluster_func)
+                # Lista
+                clusters.append((id_cluster_func, tipo, casa))
+    
+    # Guardar clusters en archivo JSON
+    with open("dgraph_clusters.json", "w", encoding="utf-8") as f:
+        json.dump(clusters_data, f, indent=2) # recuperamos clusters_data y lo guardamos en el archivo
     
     # Archivo para relaciones
-    with open("dgraph_relaciones.csv", "w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        # Crear columnas
-        writer.writerow(["id_relacion", "id_origen", "tipo_origen", "id_destino", "tipo_destino", "tipo_relacion", "peso"])
+    relaciones_data = []  # Lista para almacenar las relaciones
+    
+    # Relaciones entre nodos y clusters (pertenencia)
+    for id_nodo, tipo_nodo, id_casa_nodo in nodos:
+        # Crear una lista de clusters de casa desde la lista existente 'clusters' si el tipo es casa y el id de la casa es el mismo
+        clusters_casa = [c for c in clusters if c[1] == "casa" and c[2] == id_casa_nodo]
+
+        if clusters_casa:
+            # Seleccionamos el cluster de casa
+            id_cluster_casa = clusters_casa[0][0]
+            # Crear un id aleatorio para la relacion
+            id_relacion = str(uuid.uuid4())
+
+            # Estructura de la relacion
+            relacion = {
+                "id_relacion": id_relacion,
+                "id_origen": id_nodo,
+                "tipo_origen": "dispositivo",
+                "id_destino": id_cluster_casa,
+                "tipo_destino": "cluster",
+                "tipo_relacion": "pertenece_a",
+                "peso": 1.0
+            }
+            # Añadir la relacion a la lista de relaciones
+            relaciones_data.append(relacion)
         
-        # Leer nodos y clusters
-        nodos = []
-        with open("dgraph_nodos.csv", "r", newline="", encoding="utf-8") as f_nodos:
-            reader = csv.DictReader(f_nodos)
-            for row in reader:
-                nodos.append((row["id_nodo"], row["tipo_nodo"], row["id_casa"]))
-        
-        clusters = []
-        with open("dgraph_clusters.csv", "r", newline="", encoding="utf-8") as f_clusters:
-            reader = csv.DictReader(f_clusters)
-            for row in reader:
-                clusters.append((row["id_cluster"], row["tipo_cluster"], row["id_casa"]))
-        
-        # Relaciones entre nodos y clusters (pertenencia)
-        for id_nodo, tipo_nodo, id_casa_nodo in nodos:
-            # Conectar con cluster de casa
-            clusters_casa = [c for c in clusters if c[1] == "casa" and c[2] == id_casa_nodo]
-            if clusters_casa:
-                id_cluster_casa = clusters_casa[0][0]
+        # Conectar con cluster de habitación (basado en el tipo de dispositivo y probabilidad)
+        if tipo_nodo == "bombilla":
+            habitaciones_posibles = ["sala", "cocina", "dormitorio_principal", "baño"]
+        elif tipo_nodo == "aire_acondicionado":
+            habitaciones_posibles = ["sala", "dormitorio_principal"]
+        elif tipo_nodo == "cerradura":
+            habitaciones_posibles = ["entrada", "puerta_trasera"]
+        elif tipo_nodo == "aspiradora":
+            habitaciones_posibles = ["sala"]
+        elif tipo_nodo == "refrigerador":
+            habitaciones_posibles = ["cocina"]
+        else:
+            habitaciones_posibles = ["sala"]
+            
+        # Para cada habitación posible
+        for habitacion in habitaciones_posibles:
+            # Crear una lista de clusters de habitación desde la lista existente 'clusters' si el tipo es habitación y el id de la casa es el mismo
+            clusters_hab = [c for c in clusters if c[1] == habitacion and c[2] == id_casa_nodo]
+
+            # Si hay clusters de habitación y la probabilidad es mayor a 0.3
+            if clusters_hab and random.random() > 0.3:
+                # Seleccionamos el cluster de habitación
+                id_cluster_hab = clusters_hab[0][0]
+                # Crear un id aleatorio para la relacion
                 id_relacion = str(uuid.uuid4())
-                writer.writerow([
-                    id_relacion, id_nodo, "dispositivo", 
-                    id_cluster_casa, "cluster", "pertenece_a", 1.0
-                ])
-            
-            # Conectar con cluster de habitación (probabilidad)
-            if tipo_nodo == "bombilla":
-                habitaciones_posibles = ["sala", "cocina", "dormitorio_principal", "baño"]
-            elif tipo_nodo == "aire_acondicionado":
-                habitaciones_posibles = ["sala", "dormitorio_principal"]
-            elif tipo_nodo == "cerradura":
-                habitaciones_posibles = ["entrada", "puerta_trasera"]
-            elif tipo_nodo == "aspiradora":
-                habitaciones_posibles = ["sala"]
-            elif tipo_nodo == "refrigerador":
-                habitaciones_posibles = ["cocina"]
-            else:
-                habitaciones_posibles = ["sala"]
-                
-            for habitacion in habitaciones_posibles:
-                clusters_hab = [c for c in clusters if c[1] == habitacion and c[2] == id_casa_nodo]
-                if clusters_hab and random.random() > 0.3:
-                    id_cluster_hab = clusters_hab[0][0]
-                    id_relacion = str(uuid.uuid4())
-                    writer.writerow([
-                        id_relacion, id_nodo, "dispositivo", 
-                        id_cluster_hab, "cluster", "ubicado_en", random.uniform(0.7, 1.0)
-                    ])
-            
-            # Conectar con cluster funcional
-            if tipo_nodo == "bombilla":
-                func_posible = "iluminacion"
-            elif tipo_nodo == "aire_acondicionado" or tipo_nodo == "refrigerador":
-                func_posible = "climatizacion"
-            elif tipo_nodo == "cerradura":
-                func_posible = "seguridad"
-            else:
-                func_posible = random.choice(["entretenimiento", "otros"])
-                
-            clusters_func = [c for c in clusters if c[1] == func_posible and c[2] == id_casa_nodo]
-            if clusters_func:
-                id_cluster_func = clusters_func[0][0]
-                id_relacion = str(uuid.uuid4())
-                writer.writerow([
-                    id_relacion, id_nodo, "dispositivo", 
-                    id_cluster_func, "cluster", "sirve_como", random.uniform(0.8, 1.0)
-                ])
+                # Estructura de la relacion
+                relacion = {
+                    "id_relacion": id_relacion,
+                    "id_origen": id_nodo,
+                    "tipo_origen": "dispositivo",
+                    "id_destino": id_cluster_hab,
+                    "tipo_destino": "cluster",
+                    "tipo_relacion": "ubicado_en",
+                    "peso": round(random.uniform(0.7, 1.0), 2)
+                }
+                # Añadir la relacion a la lista de relaciones
+                relaciones_data.append(relacion)
         
-        # Relaciones entre dispositivos (interacción)
-        for i, (id_nodo1, tipo_nodo1, id_casa1) in enumerate(nodos):
-            # Solo relaciones entre dispositivos de la misma casa
-            nodos_misma_casa = [(id, tipo, casa) for id, tipo, casa in nodos if casa == id_casa1 and id != id_nodo1]
+        # Asignar un cluster funcional basado en el tipo de dispositivo
+        if tipo_nodo == "bombilla":
+            func_posible = "iluminacion"
+        elif tipo_nodo == "aire_acondicionado" or tipo_nodo == "refrigerador":
+            func_posible = "climatizacion"
+        elif tipo_nodo == "cerradura":
+            func_posible = "seguridad"
+        else:
+            func_posible = random.choice(["entretenimiento", "otros"])
             
-            # Número aleatorio de relaciones (no todos los dispositivos están conectados)
-            num_relaciones = random.randint(0, min(3, len(nodos_misma_casa)))
-            for _ in range(num_relaciones):
-                if nodos_misma_casa:
-                    id_nodo2, tipo_nodo2, _ = random.choice(nodos_misma_casa)
-                    nodos_misma_casa.remove((id_nodo2, tipo_nodo2, _))
-                    
-                    # Tipo de relación basado en tipos de dispositivos
-                    if (tipo_nodo1 == "aire_acondicionado" and tipo_nodo2 == "bombilla") or \
-                       (tipo_nodo1 == "bombilla" and tipo_nodo2 == "aire_acondicionado"):
-                        tipo_relacion = "sincroniza_con"
-                    elif (tipo_nodo1 == "cerradura" and tipo_nodo2 == "bombilla") or \
-                         (tipo_nodo1 == "bombilla" and tipo_nodo2 == "cerradura"):
-                        tipo_relacion = "señaliza"
-                    else:
-                        tipo_relacion = random.choice(["comunica_con", "controla", "depende_de"])
-                    
-                    id_relacion = str(uuid.uuid4())
-                    peso = round(random.uniform(0.1, 1.0), 2)
-                    writer.writerow([
-                        id_relacion, id_nodo1, "dispositivo", 
-                        id_nodo2, "dispositivo", tipo_relacion, peso
-                    ])
+        # Crear una lista de clusters funcionales desde la lista existente 'clusters' si el tipo es funcional y el id de la casa es el mismo
+        clusters_func = [c for c in clusters if c[1] == func_posible and c[2] == id_casa_nodo]
+        # Si existen clusters funcionales
+        if clusters_func:
+            # Seleccionamos el cluster funcional
+            id_cluster_func = clusters_func[0][0]
+            # Crear un id aleatorio para la relacion
+            id_relacion = str(uuid.uuid4())
+            relacion = {
+                "id_relacion": id_relacion,
+                "id_origen": id_nodo,
+                "tipo_origen": "dispositivo",
+                "id_destino": id_cluster_func,
+                "tipo_destino": "cluster",
+                "tipo_relacion": "sirve_como",
+                "peso": round(random.uniform(0.8, 1.0), 2)
+            }
+            relaciones_data.append(relacion)
+    
+    # Relaciones entre dispositivos (interacción)
+    for i, (id_nodo1, tipo_nodo1, id_casa1) in enumerate(nodos):
+        # Solo relaciones entre dispositivos de la misma casa
+        nodos_misma_casa = [(id, tipo, casa) for id, tipo, casa in nodos if casa == id_casa1 and id != id_nodo1]
+        
+        # Número aleatorio de relaciones (no todos los dispositivos están conectados)
+        num_relaciones = random.randint(0, min(3, len(nodos_misma_casa)))
+        # Para cada relación
+        for _ in range(num_relaciones):
+            # Si hay dispositivos de la misma casa
+            if nodos_misma_casa:
+                # Seleccionamos un dispositivo aleatorio de la misma casa
+                id_nodo2, tipo_nodo2, _ = random.choice(nodos_misma_casa)
+                # Eliminamos el dispositivo de la lista para evitar duplicados
+                nodos_misma_casa.remove((id_nodo2, tipo_nodo2, _))
+                
+                # Tipo de relación basado en tipos de dispositivos, esta parte es bastante arbitraria, se puede cambiar
+                if (tipo_nodo1 == "aire_acondicionado" and tipo_nodo2 == "bombilla") or \
+                   (tipo_nodo1 == "bombilla" and tipo_nodo2 == "aire_acondicionado"):
+                    tipo_relacion = "sincroniza_con"
+                elif (tipo_nodo1 == "cerradura" and tipo_nodo2 == "bombilla") or \
+                     (tipo_nodo1 == "bombilla" and tipo_nodo2 == "cerradura"):
+                    tipo_relacion = "señaliza"
+                else:
+                    tipo_relacion = random.choice(["comunica_con", "controla", "depende_de"])
+                
+                id_relacion = str(uuid.uuid4())
+                # Peso aleatorio entre 0.1 y 1.0 a 2 decimales
+                peso = round(random.uniform(0.1, 1.0), 2)
+                relacion = {
+                    "id_relacion": id_relacion,
+                    "id_origen": id_nodo1,
+                    "tipo_origen": "dispositivo",
+                    "id_destino": id_nodo2,
+                    "tipo_destino": "dispositivo",
+                    "tipo_relacion": tipo_relacion,
+                    "peso": peso
+                }
+                relaciones_data.append(relacion)
+    
+    # Guardar relaciones en archivo JSON
+    with open("dgraph_relaciones.json", "w", encoding="utf-8") as f: # no olvidemos el encoding 
+        json.dump(relaciones_data, f, indent=2)
     
     print("Datos para Dgraph generados correctamente.")
 
@@ -600,14 +679,14 @@ def main():
     print(f"Generando datos para {NUM_CASAS} casas...")
     
     generar_datos_mongodb()
-    #generar_datos_dgraph()
+    generar_datos_dgraph()
     generar_datos_cassandra()
     
     print("\nProceso completado. Los archivos CSV se han guardado en el directorio actual.")
     print("Resumen de archivos generados:")
     # Esta parte da un resumen de los archivos generados y su tamaño
     for archivo in os.listdir("."):
-        if archivo.endswith(".py"): # Si es un archivo .py, se lo salta para no mostrarlo en el resumen
+        if archivo.endswith(".py"): # Si es un archivo .py (como este código), se lo salta para no mostrarlo en el resumen
             continue
         tamaño = os.path.getsize(f"{archivo}") / 1024  # Tamaño en KB
         print(f"- {archivo}: {tamaño:.2f} KB")
