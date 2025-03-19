@@ -66,7 +66,8 @@ def print_mongo_menu():
         1: "Temperature per room",
         2: "Electricity bill",
         3: "Devices that consume more energy",
-        4: "Attempts to force locks"
+        4: "Attempts to force locks",
+        5: "Configuration by device type"
     }
     for key in mdb_options.keys():
         print('    ', key, '--', mdb_options[key])
