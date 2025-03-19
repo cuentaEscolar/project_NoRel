@@ -1,6 +1,7 @@
 import logging
 import os
 import model
+import csv
 from cassandra.cluster import Cluster #type: ignore
 
 from pymongo import MongoClient #type:ignore
@@ -52,10 +53,12 @@ def print_menu():
 
 def print_cassandra_menu():
     cm_options = {
-        1: "Logs sensor data in real-time for time-series analysis.",
-        2: "Temperature",
-        3: "Electric consumption",
-        4: "Light Level"
+        1: "Filter the logs by date",
+        2: "Filter the logs by time and device",
+        3: "Filter the logs by time and unit",
+        4: "Filter the logs by time, unit and value",
+        5: "Filter the logs by time, device and unit",
+        6: "Filter the logs by time, device, unit and value"
     }
     for key in cm_options.keys():
         print('    ', key, '--', cm_options[key])
@@ -63,11 +66,10 @@ def print_cassandra_menu():
 
 def print_mongo_menu():
     mdb_options = {
-        1: "Temperature per room",
-        2: "Electricity bill",
-        3: "Devices that consume more energy",
-        4: "Attempts to force locks",
-        5: "Configuration by device type"
+        1: "Get device on/off time settings",
+        2: "Get device temperature settings",
+        3: "Get history settings for a device",
+        4: "Get full settings by device type"
     }
     for key in mdb_options.keys():
         print('    ', key, '--', mdb_options[key])
@@ -82,6 +84,23 @@ def print_dgraph_menu():
     }
     for key in dgm_options.keys():
         print('    ', key, '--', dgm_options[key])
+
+
+
+
+def csv_a_mongo(archivo_csv, coleccion):
+    with open(archivo_csv, "r", encoding="utf-8") as f:
+        lector = csv.DictReader(f)
+        datos = []
+        for fila in lector:
+            datos.append(fila)
+        if datos:
+            coleccion.insert_many(datos)
+        print(f"Se importaron {len(datos)} registros desde {archivo_csv} a MongoDB")
+
+def poblar_datos_mongo(db):
+    csv_a_mongo("mongodb_dispositivos.csv", db["dispositivos"])
+    csv_a_mongo("mongodb_configuraciones.csv", db["configuraciones"])
 
 
 

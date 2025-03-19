@@ -48,7 +48,7 @@ def generar_duracion_aleatoria(max_horas=12):
     minutos = random.randint(0, 59)
     return f"{horas:02d}:{minutos:02d}" # 02d para que siempre sean dos dígitos
 
-# Genera una temperatura aleatoria
+# Genera una temperatura aleatoria para aires acondicionados
 def generar_temperatura_aleatoria(min_temp=16, max_temp=30): # min_temp y max_temp son los valores mínimos y máximos de la temperatura
     return round(random.uniform(min_temp, max_temp), 1) # round para que siempre sea un número con un decimal
 
@@ -78,6 +78,11 @@ def generar_estado_aleatorio():
 def generar_ruta_aleatoria():
     rutas = ["completa", "sala principal", "habitaciones", "cocina", "personalizada"] # Incluimos personalizada para no tener demasiadas rutas
     return random.choice(rutas)
+
+#Generar una string con una locacion de la casa aleatoria
+def generar_locacion_aleatoria():
+    locacion = ["habitación de invitados", "sala principal", "habitación principal", "cocina", "oficina"]
+    return random.choice(locacion)
 
 # Genera una string con una locación aleatoria
 def generar_locacion_aleatoria():
@@ -172,7 +177,9 @@ def generar_datos_mongodb():
                     temperatura = f"{generar_temperatura_aleatoria()}°C"
                     # Determina si el modo es auto o manual con un 50% de probabilidad
                     modo = 'auto' if random.random() > 0.5 else 'manual'
-                    config_especial = f"temperatura:{temperatura},modo:{modo}"
+                    # Generarl locacion aleatoria
+                    ubicacion = generar_locacion_aleatoria()
+                    config_especial = f"temperatura:{temperatura},modo:{modo},ubicacion:{ubicacion}"
 
                 elif tipo_dispositivo == "bombilla":
                     # Genera un brillo aleatorio entre 10 y 100 y crea un color aleatorio
@@ -182,6 +189,10 @@ def generar_datos_mongodb():
                     # Genera una potencia aleatoria entre 1 y 3 y crea una ruta aleatoria
                     config_especial = f"potencia:{random.randint(1, 3)},ruta:{generar_ruta_aleatoria()}"
                 
+                elif tipo_dispositivo == "refrigerador":
+                    # Genera una temperatura aleatoria con la función que genera entre 2 y 8 gr
+                    temperatura = f"{generar_temperatura_aleatoria(min_temp=2, max_temp=8)}°C"
+
                 # Genera una fecha de modificación aleatoria
                 ultima_modificacion = generar_timestamp_aleatorio().strftime("%Y-%m-%d %H:%M:%S")
                 
