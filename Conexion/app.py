@@ -35,7 +35,7 @@ def conexion_cassandra():
 def conexion_mongo():
     ##MONGO
     client = MongoClient('mongodb://localhost:27017/')
-    db = client["intelligent_house"]
+    db = client["intelligent_houses"]
     return db
 
 
@@ -66,10 +66,11 @@ def print_cassandra_menu():
 
 def print_mongo_menu():
     mdb_options = {
-        1: "Get device on/off time settings",
-        2: "Get device temperature settings",
-        3: "Get history settings for a device",
-        4: "Get full settings by device type"
+        1: "Get user information",
+        2: "Get device on/off time settings",
+        3: "Get device status",
+        4: "Get device configuration",
+        5: "Search configurations by name"
     }
     for key in mdb_options.keys():
         print('    ', key, '--', mdb_options[key])
