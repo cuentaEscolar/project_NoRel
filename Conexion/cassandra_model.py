@@ -33,6 +33,22 @@ TABLE_TEMPLATE = """
     ) WITH CLUSTERING ORDER BY ( {} log_date DESC)
 """
 
+SELECT_TEMPLATE = """
+    SELECT {}
+    from {}
+    where account = ?
+    and 
+    {};
+"""
+
+INSERT_TEMPLATE = """
+
+        INSERT INTO {} 
+        (account , device_type , log_date , device , unit , value , comment),
+        VALUES( ?,  ?,  ?,  ?,  ?,  ?,  ?  )
+"""
+
+
 SHORTNAME_VALUES = {
     "a": "account" ,
     "d":  "log_date ",
@@ -51,30 +67,49 @@ TABLE_NAMES = [
     "log_by_a_d_de_u",
     "log_by_a_d_de_u_v"
 ]
+TABLE_PARAMETERS = { table : list(map( FULLNAMER, (table.split("_"))[4:])) for table in TABLE_NAMES}
+FULL_PARAMETERS = { table : list(map( FULLNAMER, (table.split("_"))[2:])) for table in TABLE_NAMES}
 
 
 def gen_tables( ):
 
-    tables_ = []
-    for table in TABLE_NAMES:
-        parameters = list(map( FULLNAMER, (table.split("_"))[4:])) #get the full names of the clsutering key  from the table name
-        primary_key_keys = ",".join(parameters)
-        clustering_order_keys = " DESC ,".join( parameters[::-1])
-
-        if primary_key_keys != "":
-            primary_key_keys = "," +  primary_key_keys
-
-        if clustering_order_keys != "":
-            clustering_order_keys += " DESC ,"
-
-        tables_.append( TABLE_TEMPLATE.format(table, primary_key_keys, clustering_order_keys))
-    return tables_
-
-
+    return  [
+        TABLE_TEMPLATE.format(table, 
+            (lambda x:  "," + x if x else x)( ",".join( TABLE_PARAMETERS[table] ))
+            , 
+            (lambda x: x + " DESC ," if x else x )( " DESC ,".join(  TABLE_PARAMETERS[table][::-1]))
+        )
+        for table in TABLE_NAMES
+    ]
 
 TABLES = gen_tables() 
 
+def gen_selects( ):
+
+    select_queries = {}
+    for table in TABLE_NAMES:
+        parameters = TABLE_PARAMETERS[table]
+        print(TABLE_PARAMETERS[table])
+        select_queries[table] = SELECT_TEMPLATE.format(
+                ",".join(FULL_PARAMETERS[table]),
+                table, 
+                "{}" 
+            )
+
+    return select_queries
+        
+
+
+
+SELECT_QUERIES = gen_selects()
+
+def insert_by_uuid(uuid):
+
+    session.prepare(f"INSERT INTO {table} (account, trade_id, type, symbol, shares, price, amount) VALUES(?, ?, ?, ?, ?, ?, ?)")
+
 if __name__ == "__main__":
-    print(TABLES)
+    pass
+    #print(TABLES)
+    print(SELECT_QUERIES)
 
 
