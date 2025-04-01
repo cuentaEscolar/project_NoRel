@@ -1,4 +1,3 @@
-
 import datetime
 import logging
 import random
@@ -24,6 +23,7 @@ TABLE_TEMPLATE = """
     CREATE TABLE IF NOT EXISTS {} (
 
         account TEXT, 
+        device_type TEXT,
         log_date TIMEUUID,
         device uuid,
         unit TEXT,
@@ -57,7 +57,7 @@ def gen_tables( ):
 
     tables_ = []
     for table in TABLE_NAMES:
-        parameters = list(map( FULLNAMER, (table.split("_"))[4:]))
+        parameters = list(map( FULLNAMER, (table.split("_"))[4:])) #get the full names of the clsutering key  from the table name
         primary_key_keys = ",".join(parameters)
         clustering_order_keys = " DESC ,".join( parameters[::-1])
 
@@ -67,10 +67,7 @@ def gen_tables( ):
         if clustering_order_keys != "":
             clustering_order_keys += " DESC ,"
 
-        tables_.append(
-            TABLE_TEMPLATE.format(table, primary_key_keys, clustering_order_keys)
-
-        )
+        tables_.append( TABLE_TEMPLATE.format(table, primary_key_keys, clustering_order_keys))
     return tables_
 
 
