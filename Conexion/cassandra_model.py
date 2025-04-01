@@ -103,9 +103,13 @@ def gen_selects( ):
 
 SELECT_QUERIES = gen_selects()
 
-def insert_by_uuid(uuid):
 
-    session.prepare(f"INSERT INTO {table} (account, trade_id, type, symbol, shares, price, amount) VALUES(?, ?, ?, ?, ?, ?, ?)")
+def insert_into_all(params):
+    for table in TABLE_NAMES: 
+        stmt = session.prepare(INSERT_TEMPLATE.format(table))
+        session.execute(
+            stmt, params
+        )
 
 if __name__ == "__main__":
     pass
