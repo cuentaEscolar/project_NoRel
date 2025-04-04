@@ -16,7 +16,7 @@ import uuid
 import json  # Generamos JSON en vez de CSV para Dgraph
 
 # De esta variable depende el número de datos creados
-NUM_CASAS = 100
+NUM_CASAS = 10
 
 # La fecha inicial es hace 30 días
 FECHA_INICIAL = datetime.now() - timedelta(days=30)
@@ -372,6 +372,9 @@ def generar_datos_dgraph():
                     dispositivo_origen[tipo_relacion] = []
                 dispositivo_origen[tipo_relacion].append({
                     "uid": dispositivos_nodes[id_dispositivo2],
+                    # Voy a ser muy honesto, no estoy muy seguro de si así es como se declaran
+                    # Los pesos en las relaciones, pero por el momento se va a quedar así hasta que
+                    # averigüe si es correcto o no
                     "peso": round(random.uniform(0.1, 1.0), 2)
                 })
     
