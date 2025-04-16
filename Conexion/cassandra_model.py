@@ -6,7 +6,7 @@ import uuid
 from cassandra.cluster import Cluster
 
 log = logging.getLogger(__name__)
-logging.basicConfig(filename=f'{__name__}.log', level=logging.INFO)
+logging.basicConfig(filename=f'{__file__}.log', level=logging.INFO)
 print("log created")
 
 CREATE_KEYSPACE = """
@@ -36,7 +36,7 @@ TABLE_TEMPLATE = """
         value DECIMAL,
         comment TEXT,
         PRIMARY KEY ((account), log_date {} )
-    ) WITH CLUSTERING ORDER BY ( {} log_date DESC)
+    ) WITH CLUSTERING ORDER BY (  log_date DESC {})
 """
 
 SELECT_TEMPLATE = """
@@ -92,7 +92,7 @@ def gen_tables( ):
         TABLE_TEMPLATE.format(table, 
             (lambda x:  "," + x if x else x)( ",".join( TABLE_PARAMETERS[table] ))
             , 
-            (lambda x: x + " DESC ," if x else x )( " DESC ,".join(  TABLE_PARAMETERS[table][::-1]))
+            (lambda x: "," + x + " DESC " if x else x )( " DESC ,".join(  TABLE_PARAMETERS[table]))
         )
         for table in TABLE_NAMES
     }
