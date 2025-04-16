@@ -1,7 +1,13 @@
 import datetime
+import os
 import logging
 import random
 import uuid
+from cassandra.cluster import Cluster
+
+log = logging.getLogger(__name__)
+logging.basicConfig(filename=f'{__name__}.log', level=logging.INFO)
+print("log created")
 
 CREATE_KEYSPACE = """
 
@@ -70,6 +76,14 @@ TABLE_NAMES = [
 TABLE_PARAMETERS = { table : list(map( FULLNAMER, (table.split("_"))[4:])) for table in TABLE_NAMES}
 FULL_PARAMETERS = { table : list(map( FULLNAMER, (table.split("_"))[2:])) for table in TABLE_NAMES}
 
+def execute_batch(session, stmt, data):
+    batch_size = 10
+    for i in range(0, len(data), batch_size):
+        batch = BatchStatement()
+        for item in data[i : i+batch_size]:
+            batch.add(stmt, item)
+        session.execute(batch)
+    session.execute(batch)
 
 def gen_tables( ):
 
@@ -84,13 +98,26 @@ def gen_tables( ):
     }
 
 TABLES = gen_tables() 
+def create_keyspace(session, keyspace, replication_factor):
+    log.info(f"Creating keyspace: {keyspace} with replication factor {replication_factor}")
+    session.execute(CREATE_KEYSPACE.format(keyspace, replication_factor))
+
+
+def create_schema(session):
+
+    log.info("Creating model schema")
+    for table in TABLES:
+        #log.info(table)
+        print(table)
+        print(TABLES[table])
+        session.execute(TABLES[table])
 
 def gen_selects( ):
 
     select_queries = {}
     for table in TABLE_NAMES:
         parameters = TABLE_PARAMETERS[table]
-        print(TABLE_PARAMETERS[table])
+        #print(TABLE_PARAMETERS[table])
         select_queries[table] = SELECT_TEMPLATE.format(
                 ",".join(FULL_PARAMETERS[table]),
                 table, 
@@ -112,7 +139,20 @@ def insert_into_all(params):
             stmt, params
         )
 
-if __name__ == "__main__":
+def get_session():
+    CLUSTER_IPS = os.getenv('CASSANDRA_CLUSTER_IPS', 'localhost')
+    KEYSPACE = os.getenv('CASSANDRA_KEYSPACE', 'investments')
+    REPLICATION_FACTOR = os.getenv('CASSANDRA_REPLICATION_FACTOR', '1')
+
+    cluster = Cluster(CLUSTER_IPS.split(','))
+    session = cluster.connect()
+
+    create_keyspace(session, KEYSPACE, REPLICATION_FACTOR)
+    session.set_keyspace(KEYSPACE)
+    create_schema(session)
+    return session
+
+def print_tables():
     print("<table>")
     def tr(x): return "<tr>" + x + "</tr>"
     def th(x): return "<th>" + x + "</th>"
@@ -151,4 +191,8 @@ if __name__ == "__main__":
     print(c)
     #print(SELECT_QUERIES)
 
+
+if __name__ == "__main__":
+    get_session()
+    print("done")
 
