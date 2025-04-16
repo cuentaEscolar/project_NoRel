@@ -73,14 +73,15 @@ FULL_PARAMETERS = { table : list(map( FULLNAMER, (table.split("_"))[2:])) for ta
 
 def gen_tables( ):
 
-    return  [
+    return  {
+        table: 
         TABLE_TEMPLATE.format(table, 
             (lambda x:  "," + x if x else x)( ",".join( TABLE_PARAMETERS[table] ))
             , 
             (lambda x: x + " DESC ," if x else x )( " DESC ,".join(  TABLE_PARAMETERS[table][::-1]))
         )
         for table in TABLE_NAMES
-    ]
+    }
 
 TABLES = gen_tables() 
 
@@ -112,8 +113,42 @@ def insert_into_all(params):
         )
 
 if __name__ == "__main__":
-    pass
-    #print(TABLES)
-    print(SELECT_QUERIES)
+    print("<table>")
+    def tr(x): return "<tr>" + x + "</tr>"
+    def th(x): return "<th>" + x + "</th>"
+    def td(x): return "<td>" + x + "</td>"
+    print(tr( th("Requirement") + th("Expected Output") ))
+    c = 0
+    for table_name, table_create in TABLES.items():
+
+        if "unit" not in ' '.join(FULL_PARAMETERS[table_name]):
+            c+=1 
+            print(tr(
+                td( f"Users should be able to filter the logs by {' '.join(FULL_PARAMETERS[table_name]) }")
+                + 
+                td ( f"A set of rows matching the {' '.join(FULL_PARAMETERS[table_name]) }")
+            ))
+            continue
+        
+        newparameters = [ x for x in FULL_PARAMETERS[table_name] ]
+        for unit in "voltage,light level,humidity,temperature".split(","):
+            newparameters.append(unit)
+            print(tr(
+                td( f"Users should be able to filter the logs by {' '.join(newparameters) }")
+                + 
+                td ( f"A set of rows matching the {' '.join(newparameters) }")
+            ))
+            c+=1
+            newparameters.pop() 
+        #print( "<tr>"  )
+        #print( f"<th>  {'log by ' + ' '.join(FULL_PARAMETERS[table_name])}  </th>")
+        #print( "</tr>")
+        #print( "<tr>"  )
+        #print( f"<td> {table_create} </td>")
+        #print( "</tr>")
+        
+    print("</table>")
+    print(c)
+    #print(SELECT_QUERIES)
 
 
