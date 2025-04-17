@@ -214,6 +214,7 @@ def generar_datos_dgraph():
 
     # Sin embargo, esta cosa genera DEMASIADA información, con 100 casas genera un JSON de más de 50k lineas
     # No sé si se me fue la mano con algún ciclo o algo así pero el archivo generado es demasiado grande
+    # Tal vez sea bueno revisar esto en el futuro
 
     # Lista que contendrá todos los nodos y relaciones
     dgraph_data = {"set": []}
@@ -355,35 +356,26 @@ def generar_datos_dgraph():
                 id_dispositivo2, tipo_dispositivo2 = random.choice(dispositivos_misma_casa)
                 dispositivos_misma_casa.remove((id_dispositivo2, tipo_dispositivo2))
                 
-                # Determinar tipo de relación
-                if (tipo_dispositivo1 == "aire_acondicionado" and tipo_dispositivo2 == "bombilla") or \
-                   (tipo_dispositivo1 == "bombilla" and tipo_dispositivo2 == "aire_acondicionado"):
+                # Si es alguno de estos 4 dispositivos, se agrega esta relación
+                if ((tipo_dispositivo1 == "aire_acondicionado" and tipo_dispositivo2 == "bombilla") or 
+                    (tipo_dispositivo1 == "bombilla" and tipo_dispositivo2 == "aire_acondicionado")):
                     tipo_relacion = "sincroniza_con"
-                elif (tipo_dispositivo1 == "cerradura" and tipo_dispositivo2 == "bombilla") or \
-                     (tipo_dispositivo1 == "bombilla" and tipo_dispositivo2 == "cerradura"):
-                    tipo_relacion = "señaliza"
-                else:
-                    tipo_relacion = random.choice(["comunica_con", "controla", "depende_de"])
-                
-                # Agregar la relación al dispositivo origen
-                dispositivo_origen = next(d for d in dgraph_data["set"] 
-                                       if d["uid"] == dispositivos_nodes[id_dispositivo1])
-                if tipo_relacion not in dispositivo_origen:
-                    dispositivo_origen[tipo_relacion] = []
-                dispositivo_origen[tipo_relacion].append({
-                    "uid": dispositivos_nodes[id_dispositivo2],
-                    # Voy a ser muy honesto, no estoy muy seguro de si así es como se declaran
-                    # Los pesos en las relaciones, pero por el momento se va a quedar así hasta que
-                    # averigüe si es correcto o no
-                    "peso": round(random.uniform(0.1, 1.0), 2)
-                })
+                    
+                    # Agregar la relación al dispositivo origen
+                    dispositivo_origen = next(d for d in dgraph_data["set"] 
+                                           if d["uid"] == dispositivos_nodes[id_dispositivo1])
+                    if tipo_relacion not in dispositivo_origen:
+                        dispositivo_origen[tipo_relacion] = []
+                    dispositivo_origen[tipo_relacion].append({
+                        "uid": dispositivos_nodes[id_dispositivo2],
+                        "peso": round(random.uniform(0.1, 1.0), 2)
+                    })
     
     # Guardar todo en un solo archivo JSON
     with open("dgraph_data.json", "w", encoding="utf-8") as f:
         json.dump(dgraph_data, f, indent=2, ensure_ascii=False)
     
     print("Datos para Dgraph generados correctamente en formato de mutación.")
-
 # Generación de datos para Cassandra (datos de sensores en tiempo real)
 def generar_datos_cassandra():
     # Lee los dispositivos del archivo para MongoDB para mantener consistencia
@@ -647,3 +639,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
