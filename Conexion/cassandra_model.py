@@ -9,7 +9,7 @@ from cassandra.cluster import Cluster
 
 log = logging.getLogger(__name__)
 logging.basicConfig(filename=f'{__file__}.log', level=logging.INFO)
-print("log created")
+#print("log created")
 
 CREATE_KEYSPACE = """
         CREATE KEYSPACE IF NOT EXISTS {}
@@ -198,49 +198,14 @@ def get_session():
     create_schema(session)
     return session
 
-def print_tables():
-    print("<table>")
-    def tr(x): return "<tr>" + x + "</tr>"
-    def th(x): return "<th>" + x + "</th>"
-    def td(x): return "<td>" + x + "</td>"
-    print(tr( th("Requirement") + th("Expected Output") ))
-    c = 0
-    for table_name, table_create in TABLES.items():
-
-        if "unit" not in ' '.join(FULL_PARAMETERS[table_name]):
-            c+=1 
-            print(tr(
-                td( f"Users should be able to filter the logs by {' '.join(FULL_PARAMETERS[table_name]) }")
-                + 
-                td ( f"A set of rows matching the {' '.join(FULL_PARAMETERS[table_name]) }")
-            ))
-            continue
-        
-        newparameters = [ x for x in FULL_PARAMETERS[table_name] ]
-        for unit in "voltage,light level,humidity,temperature".split(","):
-            newparameters.append(unit)
-            print(tr(
-                td( f"Users should be able to filter the logs by {' '.join(newparameters) }")
-                + 
-                td ( f"A set of rows matching the {' '.join(newparameters) }")
-            ))
-            c+=1
-            newparameters.pop() 
-        #print( "<tr>"  )
-        #print( f"<th>  {'log by ' + ' '.join(FULL_PARAMETERS[table_name])}  </th>")
-        #print( "</tr>")
-        #print( "<tr>"  )
-        #print( f"<td> {table_create} </td>")
-        #print( "</tr>")
-        
-    print("</table>")
-    print(c)
-    #print(SELECT_QUERIES)
-
 
 if __name__ == "__main__":
-    session = get_session()
-    create_gets(session)
-    print("done")
-    print_my_functions()
+    #print_table_descriptions()
+    print_mermaid()
+    #print_tables()
+    #print_requirements()
+    #session = get_session()
+    #create_gets(session)
+    #print("done")
+    #print_my_functions()
 
