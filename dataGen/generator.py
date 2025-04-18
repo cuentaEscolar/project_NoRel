@@ -206,7 +206,6 @@ def generar_datos_mongodb():
     # Print para mostrar que todo salió bien
     print("Datos para MongoDB generados correctamente.")
 
-
 # Generación de datos para Dgraph (relaciones entre dispositivos)
 def generar_datos_dgraph():
     # Contrario a las otras 2 funciones generadoras, esta produce archivos JSON en vez de CSV
@@ -228,6 +227,7 @@ def generar_datos_dgraph():
     
     # Generar nodos para las casas
     casas = {}
+    # Para cada casa extraida del archivo de mongoDB generar los nodos de casa para DGraph
     for casa_id in range(1, NUM_CASAS + 1):
         casa_uid = f"_:casa_{casa_id}"
         casas[casa_id] = casa_uid
@@ -242,9 +242,22 @@ def generar_datos_dgraph():
     
     # Generar nodos para los dispositivos y conectarlos a sus casas
     dispositivos_nodes = {}
+    # Diccionario para mantener registro de qué dispositivos están en qué ubicación
+    dispositivos_por_ubicacion = {}
+    
     for id_dispositivo, tipo_dispositivo, id_casa in dispositivos:
         dispositivo_uid = f"_:dispositivo_{id_dispositivo[:8]}"
         dispositivos_nodes[id_dispositivo] = dispositivo_uid
+        
+        # Asignar una ubicación para todos los tipos de dispositivos que la necesitan
+        ubicacion = None
+        # Si es alguno de estos 3 dispositivos, generar ubicación al azar
+        if tipo_dispositivo in ["aire_acondicionado", "bombilla", "cerradura"]:
+            ubicacion = generar_locacion_aleatoria()
+            # Registrar el dispositivo en su ubicación
+            if (id_casa, ubicacion) not in dispositivos_por_ubicacion:
+                dispositivos_por_ubicacion[(id_casa, ubicacion)] = []
+            dispositivos_por_ubicacion[(id_casa, ubicacion)].append((id_dispositivo, dispositivo_uid))
         
         # Crear nodo del dispositivo
         dispositivo_node = {
@@ -257,25 +270,35 @@ def generar_datos_dgraph():
         }
         
         # Agregar configuraciones específicas según el tipo de dispositivo
+        # Para ACs
         if tipo_dispositivo == "aire_acondicionado":
             dispositivo_node.update({
                 "temperatura": f"{generar_temperatura_aleatoria()}°C",
                 "modo": random.choice(["auto", "manual"]),
-                "ubicacion": generar_locacion_aleatoria()
+                "ubicacion": ubicacion
             })
+        # Para bombillas
         elif tipo_dispositivo == "bombilla":
             dispositivo_node.update({
                 "brillo": f"{random.randint(10, 100)}%",
-                "color": generar_color_aleatorio()
+                "color": generar_color_aleatorio(),
+                "ubicacion": ubicacion
             })
+        # Para aspiradoras
         elif tipo_dispositivo == "aspiradora":
             dispositivo_node.update({
                 "potencia": random.randint(1, 3),
                 "ruta": generar_ruta_aleatoria()
             })
+        # Para refrigeradores
         elif tipo_dispositivo == "refrigerador":
             dispositivo_node.update({
                 "temperatura": f"{generar_temperatura_aleatoria(2, 8)}°C"
+            })
+        # Cerraduras
+        elif tipo_dispositivo == "cerradura":
+            dispositivo_node.update({
+                "ubicacion": ubicacion
             })
         
         # Agregar el dispositivo a la lista de dispositivos de la casa
@@ -300,16 +323,21 @@ def generar_datos_dgraph():
                     "contiene_dispositivos": []
                 }
                 
-                # Asignar dispositivos al cluster según el tipo de habitación
+                # Asignar dispositivos al cluster basado en su ubicación
                 for id_dispositivo, tipo_dispositivo, id_casa in dispositivos:
                     if int(id_casa) == casa_id:
-                        if ((habitacion == "sala" and tipo_dispositivo in ["bombilla", "aire_acondicionado"]) or
-                            (habitacion == "cocina" and tipo_dispositivo in ["bombilla", "refrigerador"]) or
-                            (habitacion == "dormitorio_principal" and tipo_dispositivo in ["bombilla", "aire_acondicionado"])):
-                            if random.random() > 0.3:  # 70% de probabilidad de asignación
-                                cluster_node["contiene_dispositivos"].append(
-                                    {"uid": dispositivos_nodes[id_dispositivo]}
-                                )
+                        # Obtener el nodo del dispositivo
+                        dispositivo_node = next(
+                            d for d in dgraph_data["set"] 
+                            if d.get("id_dispositivo") == id_dispositivo
+                        )
+                        
+                        # Verificar si el dispositivo tiene ubicación y si corresponde a esta habitación
+                        if ("ubicacion" in dispositivo_node and 
+                            dispositivo_node["ubicacion"].lower().replace(" ", "_") == habitacion):
+                            cluster_node["contiene_dispositivos"].append(
+                                {"uid": dispositivos_nodes[id_dispositivo]}
+                            )
                 
                 dgraph_data["set"].append(cluster_node)
     
@@ -356,7 +384,7 @@ def generar_datos_dgraph():
                 id_dispositivo2, tipo_dispositivo2 = random.choice(dispositivos_misma_casa)
                 dispositivos_misma_casa.remove((id_dispositivo2, tipo_dispositivo2))
                 
-                # Si es alguno de estos 4 dispositivos, se agrega esta relación
+                # Si es alguno de estos dispositivos, se agrega esta relación
                 if ((tipo_dispositivo1 == "aire_acondicionado" and tipo_dispositivo2 == "bombilla") or 
                     (tipo_dispositivo1 == "bombilla" and tipo_dispositivo2 == "aire_acondicionado")):
                     tipo_relacion = "sincroniza_con"
@@ -376,6 +404,7 @@ def generar_datos_dgraph():
         json.dump(dgraph_data, f, indent=2, ensure_ascii=False)
     
     print("Datos para Dgraph generados correctamente en formato de mutación.")
+
 # Generación de datos para Cassandra (datos de sensores en tiempo real)
 def generar_datos_cassandra():
     # Lee los dispositivos del archivo para MongoDB para mantener consistencia
