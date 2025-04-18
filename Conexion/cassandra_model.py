@@ -7,6 +7,10 @@ import uuid
 import inspect
 from cassandra.cluster import Cluster
 
+"""
+This module provides some helper functions to sync cassandra
+"""
+
 log = logging.getLogger(__name__)
 logging.basicConfig(filename=f'{__file__}.log', level=logging.INFO)
 #print("log created")
@@ -109,8 +113,6 @@ def create_schema(session):
     log.info("Creating model schema")
     for table in TABLES:
         log.info(table)
-        #print(table)
-        #print(TABLES[table])
         session.execute(TABLES[table])
 
 def gen_selects( ):
@@ -133,12 +135,6 @@ def gen_selects( ):
 SELECT_QUERIES = gen_selects()
 
 
-def insert_into_all(params):
-    for table in TABLE_NAMES: 
-        stmt = session.prepare(INSERT_TEMPLATE.format(table))
-        session.execute(
-            stmt, params
-        )
 def print_my_functions():
     current_module = sys.modules[__name__]
     functions = inspect.getmembers(current_module, inspect.isfunction)
@@ -152,6 +148,16 @@ def call_select(session, select_stmt, data ):
     stmt = session.prepare(select_stmt)
     rows = session.execute(stmt, data )
     return rows
+
+def insert_data(session):
+    def insert_into_all(params):
+        for table in TABLE_NAMES: 
+            stmt = session.prepare(INSERT_TEMPLATE.format(table))
+            session.execute(
+                stmt, params
+            )
+    return insert_into_all
+
 
 def create_gets(session):
     call_template = """get_{}({})"""
@@ -186,8 +192,12 @@ def get_{}( acc, d, {}):
     
 
 def get_session():
+    """
+    this creates the connection to the cassandra database 
+    and returns an active session
+    """
     CLUSTER_IPS = os.getenv('CASSANDRA_CLUSTER_IPS', 'localhost')
-    KEYSPACE = os.getenv('CASSANDRA_KEYSPACE', 'investments')
+    KEYSPACE = os.getenv('CASSANDRA_KEYSPACE', 'iot')
     REPLICATION_FACTOR = os.getenv('CASSANDRA_REPLICATION_FACTOR', '1')
 
     cluster = Cluster(CLUSTER_IPS.split(','))
@@ -198,10 +208,20 @@ def get_session():
     create_schema(session)
     return session
 
+def test_session(session):
+    stmt = "use iot;"
+    stmt = session.prepare(stmt)
+    result = (session.execute(stmt))
+    stmt = "describe tables;"
+    stmt = session.prepare(stmt)
+    result = (session.execute(stmt))
+    for r in result: print(r)
 
 if __name__ == "__main__":
+    print(get_session.__doc__)
     #print_table_descriptions()
-    print_mermaid()
+
+    #print_mermaid()
     #print_tables()
     #print_requirements()
     #session = get_session()
