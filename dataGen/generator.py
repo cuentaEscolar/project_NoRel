@@ -405,16 +405,22 @@ def generar_datos_dgraph():
     
     print("Datos para Dgraph generados correctamente en formato de mutación.")
 
-# Generación de datos para Cassandra (datos de sensores en tiempo real)
-def generar_datos_cassandra():
-    # Lee los dispositivos del archivo para MongoDB para mantener consistencia
+def load_csv_devices(file):
     dispositivos = []
-    with open("mongodb_dispositivos.csv", "r", newline="", encoding="utf-8") as f_disp:
+    with open(file, "r", newline="", encoding="utf-8") as f_disp:
         reader = csv.DictReader(f_disp) # Leer el archivo como un diccionario
         for row in reader:
             if row["activo"] == "True":  # Solo generar datos para dispositivos activos
                 # Añadir el dispositivo a la lista creada unas lineas arriba
                 dispositivos.append((row["id_dispositivo"], row["tipo_dispositivo"], row["id_casa"]))
+
+    return dispositivos
+
+
+# Generación de datos para Cassandra (datos de sensores en tiempo real)
+def generar_datos_cassandra():
+    # Lee los dispositivos del archivo para MongoDB para mantener consistencia
+    dispositivos = load_csv_devices("mongodb_dispositivos.csv")
     
     # Archivo para sensores de aire acondicionado
     with open("cassandra_aire_acondicionado.csv", "w", newline="", encoding="utf-8") as f:
