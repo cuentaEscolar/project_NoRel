@@ -421,10 +421,9 @@ def load_csv_devices(file):
 def gen_random_timestamp(current_date):
     return  (current_date + timedelta(hours=random.randint(0, 23), minutes=random.randint(0, 59))).strftime("%y-%m-%d %h:%m:%s")
 # Generación de datos para Cassandra (datos de sensores en tiempo real)
-def generar_datos_cassandra():
-    # Lee los dispositivos del archivo para MongoDB para mantener consistencia
-    dispositivos = load_csv_devices("mongodb_dispositivos.csv")
-    #print(dispositivos)
+#
+def cassandra_log(timestamp, device):
+
     functions_per_unit = {
         "celsius" : generar_temperatura_aleatoria,
         "kWh" : generar_consumo_energia_aleatorio ,
@@ -432,7 +431,9 @@ def generar_datos_cassandra():
         "state" : generar_estado_aleatorio,
         "on_time" : generar_duracion_aleatoria,
         "intentos_forcejeo" : (lambda  :  random.randint(1, 5) if random.random() < 0.01 else 0) ,
-        "hora_apertura" :  gen_random_timestamp
+        "hora_apertura" :  gen_random_timestamp,
+        "door_open_time" :  generar_duracion_aleatoria    ,
+        "ruta" : generar_ruta_aleatoria
 
     }
 
@@ -442,8 +443,24 @@ def generar_datos_cassandra():
             "locacion", 
             "state", "on_time")     ,
         "bombilla": ("kWh", "state", "on_time"),
-        "cerradura": ('intentos_forcejeo', "hora_apertura")
-                             }
+        "cerradura": ('intentos_forcejeo', "hora_apertura"),
+        "refrigerador": ("kWh", "celsius", "door_open_time"),
+                             "aspiradora" : ("kWh", "ruta", "state")
+                }
+
+    if device["device_type"] not in units_per_device_type: return  [ ]
+    functions_per_unit["hora_apertura"] = lambda : gen_random_timestamp(timestamp)
+    functions_per_unit['kWh'] = lambda : generar_consumo_energia_aleatorio(device['device_type'])
+    result = []
+    for unit in units_per_device_type[device["device_type"]]:
+        result.append (( device["account"], device['device_type'], gen_random_timestamp(timestamp), 
+                        device['device_uuid'], unit, functions_per_unit[unit](), ''))
+    return result
+
+def generar_datos_cassandra():
+    # Lee los dispositivos del archivo para MongoDB para mantener consistencia
+    dispositivos = load_csv_devices("mongodb_dispositivos.csv")
+    #print(dispositivos)
     with open("cassandra_logs.csv", "w", newline="", encoding="utf-8") as f:
 
         writer = csv.writer(f)
@@ -453,121 +470,14 @@ def generar_datos_cassandra():
         ])
         fecha_actual = FECHA_INICIAL
         while fecha_actual <= FECHA_FINAL:
-            functions_per_unit["hora_apertura"] = lambda : gen_random_timestamp(fecha_actual)
-
             for device in dispositivos:
-
-                if device["device_type"] not in units_per_device_type: continue
-                functions_per_unit['kWh'] = lambda : generar_consumo_energia_aleatorio(device['device_type'])
-                for unit in units_per_device_type[device["device_type"]]:
-                    writer.writerow(( device["account"], device['device_type'], gen_random_timestamp(fecha_actual), 
-                                    device['device_uuid'], unit, functions_per_unit[unit](), ''))
-            timedelta(days=10)
+                for log in cassandra_log(fecha_actual, device):
+                    writer.writerow(log)
+            fecha_actual += timedelta(days=1)
     return
     
-    
-    # Archivo para datos de cerraduras
-    
     # Archivo para aspiradoras
-    with open("cassandra_aspiradoras.csv", "w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        # Crear columnas
-        writer.writerow([
-            "id_registro", "id_dispositivo", "id_casa", "timestamp", 
-            "consumo_energia", "hora_encendido", "hora_apagado", 
-            "hora_auto_limpieza", "ruta", "estado"
-        ])
-        
-        # Para cada dispositivo
-        for id_dispositivo, tipo_dispositivo, id_casa in dispositivos:
-            # Si no es aspiradora, se lo salta
-            if tipo_dispositivo != "aspiradora":
-                continue
-                
-            # Generalmente las aspiradoras no se usan todos los días
-            fecha_actual = FECHA_INICIAL
-            while fecha_actual <= FECHA_FINAL:
-                if random.random() < 0.1:  # 10% de probabilidad (no se usa todos los días)
-                    id_registro = str(uuid.uuid4())
-                    # Genera timestamp random y le da formato
-                    timestamp = (fecha_actual + timedelta(hours=random.randint(8, 18), 
-                                                        minutes=random.randint(0, 59))).strftime("%Y-%m-%d %H:%M:%S")
-                    # random
-                    consumo = generar_consumo_energia_aleatorio("aspiradora")
-                    hora_encendido = generar_hora_aleatoria()
-                    hora_apagado = generar_hora_aleatoria()
-                    
-                    # Auto-limpieza ocasional, para los roombas y los irobot, que son aspiradoras IoT
-                    hora_auto_limpieza = ""
-                    if random.random() < 0.3:  # 30% de probabilidad de auto-limpieza
-                        hora_auto_limpieza = generar_hora_aleatoria() 
-                    
-                    ruta = generar_ruta_aleatoria()
-                    estado = generar_estado_aleatorio()
-                    
-                    # Escribir al archivo
-                    writer.writerow([
-                        id_registro, id_dispositivo, id_casa, timestamp, 
-                        consumo, hora_encendido, hora_apagado, 
-                        hora_auto_limpieza, ruta, estado
-                    ])
-                
-                fecha_actual += timedelta(days=1)
     
-    # Archivo para datos de sensores (registros de refrigeradores)
-    with open("cassandra_refrigeradores.csv", "w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        # Crear columnas
-        writer.writerow([
-            "id_registro", "id_dispositivo", "id_casa", "timestamp", 
-            "consumo_energia", "temperatura_interna", "tiempo_puerta_abierta"
-        ])
-        
-        # Para cada dispositivo
-        for id_dispositivo, tipo_dispositivo, id_casa in dispositivos:
-            # Si no es refrigerador, se lo salta
-            if tipo_dispositivo != "refrigerador":
-                continue
-                
-            # Los refrigeradores tienen registros continuos (todos los días)
-            fecha_actual = FECHA_INICIAL
-            while fecha_actual <= FECHA_FINAL: # Mientras la fecha actual sea menor o igual a la fecha final
-
-                # Esta sección de generar datos para refrigeradores, fue todo un tema ya que tiene muchas variables
-                # que se tienen que tener en cuenta y además la manera de medirlos es bastante compleja. Por lo que para
-                # esta sección, me tuve que apoyar de varias fuentes externas como StackOverflow y un poco de ChatGPT
-                # para poder darle pies y cabeza a todo esto.
-
-                # Varios registros por día (cada pocas horas)
-                for hora in range(0, 24, 4):  # Cada 4 horas
-                    id_registro = str(uuid.uuid4()) 
-                    timestamp = (fecha_actual + timedelta(hours=hora, 
-                                                        minutes=random.randint(0, 59))).strftime("%Y-%m-%d %H:%M:%S")
-                    
-                    # El consumo cambia según la hora del día (más en horas pico)
-                    factor_hora = 1.0
-                    # Si es hora de comida, el consumo aumenta (asumiendo horas de comida de 11 a 14 y de 18 a 21)
-                    if 11 <= hora <= 14 or 18 <= hora <= 21:
-                        factor_hora = 1.2  # Mayor consumo en horas de comidas (más aperturas)
-                        
-                    # Genera un consumo de energía aleatorio para el dispositivo
-                    consumo = generar_consumo_energia_aleatorio("refrigerador") * factor_hora
-                    
-                    # Temperatura interna (normalmente entre 2 y 8 grados)
-                    temperatura = round(random.uniform(2.0, 8.0), 1)
-                    
-                    # Tiempo con puerta abierta (minutos:segundos)
-                    minutos = random.randint(0, 5)
-                    segundos = random.randint(0, 59)
-                    tiempo_puerta_abierta = f"{minutos:02d}:{segundos:02d}"
-                    
-                    # Escribir al archivo
-                    writer.writerow([
-                        id_registro, id_dispositivo, id_casa, timestamp, 
-                        consumo, temperatura, tiempo_puerta_abierta
-                    ])
-                
-                fecha_actual += timedelta(days=1)
     
     print("Datos para Cassandra generados correctamente.")
 
