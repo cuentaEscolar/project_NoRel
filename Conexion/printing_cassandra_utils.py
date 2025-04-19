@@ -1,9 +1,28 @@
 
-def tr(x): return "<tr>" + x + "</tr>"
-def th(x): return "<th>" + x + "</th>"
-def td(x): return "<td>" + x + "</td>"
+def html_tagger(s):
+
+    if not s: 
+        s = "oops"
+
+    def tummy(x):
+        if not x : 
+            x = ""
+        if type(x) != str:
+            if type(x).__str__ is not object.__str__:
+                x = str(x)
+            else:
+                x = ""
+        return f"<{s}>{x}</{s}>"
+
+    return tummy 
+
+def tr(x): return html_tagger("tr")(x)
+def th(x): return html_tagger("th")(x)
+def td(x): return html_tagger("td")(x)
+def tabler(x): return html_tagger("table")
 
 def nice_print(arr):
+    if not arr: return ""
     if len(arr) == 0:
         return ""
     if len(arr) == 1:
@@ -12,7 +31,9 @@ def nice_print(arr):
     res = ", ".join(arr[:-1]) + " and " + arr[-1]
     return res
 
-def print_tables():
+
+
+def print_tables(TABLES):
     print("<table>")
     for table_name in TABLES.keys():
         print(tr(th(table_name)))
@@ -102,3 +123,11 @@ def print_mermaid():
 {"}"}"""
 
         )
+
+def print_my_functions():
+    current_module = sys.modules[__name__]
+    functions = inspect.getmembers(current_module, inspect.isfunction)
+    
+    print("All functions in this module:")
+    for name, func in functions:
+        print(name)

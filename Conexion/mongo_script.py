@@ -179,4 +179,4 @@ def poblar_mongodb(db):
     casas_collection = db["casas"]
     dispositivos_collection = db["dispositivos"]
     configuraciones_collection = db["configuraciones"]
-    generador(usuarios_collection, casas_collection, dispositivos_collection, configuraciones_collection)
+    return generador(usuarios_collection, casas_collection, dispositivos_collection, configuraciones_collection)

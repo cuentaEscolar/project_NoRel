@@ -6,6 +6,7 @@ import random
 import uuid
 import inspect
 from cassandra.cluster import Cluster
+import cassandra
 
 """
 This module provides some helper functions to sync cassandra
@@ -119,7 +120,7 @@ def gen_selects( ):
 
     select_queries = {}
     for table in TABLE_NAMES:
-        parameters = TABLE_PARAMETERS[table]
+        #parameters = TABLE_PARAMETERS[table]
         #print(TABLE_PARAMETERS[table])
         select_queries[table] = SELECT_TEMPLATE.format(
                 ",".join(FULL_PARAMETERS[table]),
@@ -135,13 +136,6 @@ def gen_selects( ):
 SELECT_QUERIES = gen_selects()
 
 
-def print_my_functions():
-    current_module = sys.modules[__name__]
-    functions = inspect.getmembers(current_module, inspect.isfunction)
-    
-    print("All functions in this module:")
-    for name, func in functions:
-        print(name)
 
 def call_select(session, select_stmt, data ):
 
@@ -201,6 +195,7 @@ def get_session():
 
     cluster = Cluster(CLUSTER_IPS.split(','))
     session = cluster.connect()
+    assert type(session) == cassandra.cluster.Session
 
     create_keyspace(session, KEYSPACE, REPLICATION_FACTOR)
     session.set_keyspace(KEYSPACE)
@@ -208,17 +203,19 @@ def get_session():
     return session
 
 def test_session(session):
+    
+    assert type(session) == cassandra.cluster.Session
     session.execute(session.prepare("use iot;"))
     stmt = session.prepare("describe tables;")
     result = (session.execute(stmt))
-    for r in result: 
-        print(r)
+    return result
+
 
 if __name__ == "__main__":
-    print(get_session.__doc__)
+    pass
+    #print(get_session.__doc__)
     #print_table_descriptions()
 
-    #print_mermaid()
     #print_tables()
     #print_requirements()
     #session = get_session()
