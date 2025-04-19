@@ -1,17 +1,25 @@
+from functools import reduce
+
+def coerce_to_string(x):
+    if not x : 
+        x = ""
+    if type(x) != str:
+        if type(x).__dict__.get('__str__') :
+            x = str(x)
+        elif  type(x).__str__ is not None: ##has a str method
+                x = str(x)
+        else:
+            x = ""
+    return x
 
 def html_tagger(s):
 
     if not s: 
-        s = "oops"
-
+        s = "error"
+    else:
+        s = coerce_to_string(s)
     def tummy(x):
-        if not x : 
-            x = ""
-        if type(x) != str:
-            if type(x).__str__ is not object.__str__:
-                x = str(x)
-            else:
-                x = ""
+        x = coerce_to_string(x)
         return f"<{s}>{x}</{s}>"
 
     return tummy 
@@ -19,36 +27,41 @@ def html_tagger(s):
 def tr(x): return html_tagger("tr")(x)
 def th(x): return html_tagger("th")(x)
 def td(x): return html_tagger("td")(x)
-def tabler(x): return html_tagger("table")
+def tabler(x): return html_tagger("table")(x)
 
 def nice_print(arr):
     if not arr: return ""
     if len(arr) == 0:
         return ""
     if len(arr) == 1:
-        return arr[0] 
+        return coerce_to_string(arr[0]) 
     
-    res = ", ".join(arr[:-1]) + " and " + arr[-1]
+    res = reduce( lambda x, y: f"{x}, {y}", map( coerce_to_string, arr[:-1]))
+    res += " and " + coerce_to_string(arr[-1])
     return res
 
 
 
-def print_tables(TABLES):
-    print("<table>")
-    for table_name in TABLES.keys():
-        print(tr(th(table_name)))
-        print(tr(td(TABLES[table_name])))
-
-    print("</table>")
+def printable_tables(TABLES):
+    return tabler( reduce( 
+        lambda x,y : x + y, 
+        ( tr(th(table_name)) + tr(td(TABLES[table_name]))  for table_name in TABLES.keys() )
+    ))
 
 
-def print_table_descriptions():
-    print("<table>")
-    print( tr( th("Table name") + th("Description") ) )
-    for table_name in TABLE_NAMES:
-        print( tr( td(table_name) + td( "Logs by " + nice_print(FULL_PARAMETERS[table_name] )) ) )
+def printable_table_descriptions(TABLE_NAMES, FULL_PARAMETERS):
+    return tabler(
 
-    print("</table>")
+        reduce(
+            lambda x,y : x + y
+            ,
+
+            ( ( tr( td(table_name) + td( "Logs by " + nice_print(FULL_PARAMETERS[table_name] )) ) ) 
+                for table_name in TABLE_NAMES)
+            ,
+            print( tr( th("Table name") + th("Description") ) )
+        )
+    )
 
 
 def print_requirements():

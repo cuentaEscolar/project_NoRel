@@ -412,145 +412,61 @@ def load_csv_devices(file):
         for row in reader:
             if row["activo"] == "True":  # Solo generar datos para dispositivos activos
                 # Añadir el dispositivo a la lista creada unas lineas arriba
-                dispositivos.append((row["id_dispositivo"], row["tipo_dispositivo"], row["id_casa"]))
-
+                dispositivos.append( { "device_uuid": row["id_dispositivo"], 
+                                      "device_type": row["tipo_dispositivo"], 
+                                      "account":row["id_casa"]})
     return dispositivos
 
 
+def gen_random_timestamp(current_date):
+    return  (current_date + timedelta(hours=random.randint(0, 23), minutes=random.randint(0, 59))).strftime("%y-%m-%d %h:%m:%s")
 # Generación de datos para Cassandra (datos de sensores en tiempo real)
 def generar_datos_cassandra():
     # Lee los dispositivos del archivo para MongoDB para mantener consistencia
     dispositivos = load_csv_devices("mongodb_dispositivos.csv")
-    
-    # Archivo para sensores de aire acondicionado
-    with open("cassandra_aire_acondicionado.csv", "w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        # Crear columnas
-        writer.writerow([ # Identificadores, tiempo de registro, y los datos que definimos registrar en el word
-            "id_registro", "id_dispositivo", "id_casa", "timestamp", 
-            "consumo_energia", "temperatura", "hora_encendido", "hora_apagado", 
-            "locacion", "estado", "tiempo_encendido"
-        ])
-        
-        # Para cada dispositivo
-        for id_dispositivo, tipo_dispositivo, id_casa in dispositivos:
-            # Si no es aire acondicionado, se lo salta, para evitar errores
-            if tipo_dispositivo != "aire_acondicionado":
-                continue
-                
-            # Genera múltiples registros para cada dispositivo (datos de varios días)
-            fecha_actual = FECHA_INICIAL
-            # Mientras la fecha actual sea menor o igual a la fecha final
-            while fecha_actual <= FECHA_FINAL:
-                # ===== IMPORTANTE: No todos los días tienen registros =====
-                if random.random() < 0.8:  # 80% de probabilidad de tener un registro en un día
-                    id_registro = str(uuid.uuid4())
-                    # Genera un timestamp aleatorio para el registro entre la fecha actual y la fecha final
-                    timestamp = (fecha_actual + timedelta(hours=random.randint(0, 23), 
-                                                        minutes=random.randint(0, 59))).strftime("%Y-%m-%d %H:%M:%S")
-                    # Genera un consumo de energía aleatorio para el dispositivo
-                    consumo = generar_consumo_energia_aleatorio("aire_acondicionado")
-                    # temperatura aleatoria
-                    temperatura = generar_temperatura_aleatoria()
-                    # random
-                    hora_encendido = generar_hora_aleatoria()
-                    hora_apagado = generar_hora_aleatoria()
-                    locacion = generar_locacion_aleatoria()
-                    estado = generar_estado_aleatorio()
-                    tiempo_encendido = generar_duracion_aleatoria(8)
-                    
-                    # Teniendo todos los datos, se escriben en el archivo
-                    writer.writerow([
-                        id_registro, id_dispositivo, id_casa, timestamp, 
-                        consumo, temperatura, hora_encendido, hora_apagado, 
-                        locacion, estado, tiempo_encendido
-                    ])
-                
-                fecha_actual += timedelta(days=1)
-    
-    # Archivo para datos de bombillas
-    with open("cassandra_bombillas.csv", "w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        # Crear columnas
-        writer.writerow([
-            "id_registro", "id_dispositivo", "id_casa", "timestamp", 
-            "consumo_energia", "configuracion_color", "hora_encendido", "hora_apagado"
-        ])
-        
-        # Para cada dispositivo
-        for id_dispositivo, tipo_dispositivo, id_casa in dispositivos:
-            # Si no es bombilla, se lo salta
-            if tipo_dispositivo != "bombilla":
-                continue
-                
-            # Generar múltiples registros por cada dispositivo
-            fecha_actual = FECHA_INICIAL
-            while fecha_actual <= FECHA_FINAL:
-                # ===== IMPORTANTE: No todos los días tienen registros =====
-                if random.random() < 0.9:  # 90% de probabilidad de tener un registro en un día (bombillas se usan más frecuentemente)
-                    id_registro = str(uuid.uuid4())
-                    # Genera un timestamp aleatorio para el registro entre la fecha actual y la fecha final
-                    timestamp = (fecha_actual + timedelta(hours=random.randint(0, 23), 
-                                                        minutes=random.randint(0, 59))).strftime("%Y-%m-%d %H:%M:%S")
-                    # Datos random
-                    consumo = generar_consumo_energia_aleatorio("bombilla")
-                    color = generar_color_aleatorio()
-                    hora_encendido = generar_hora_aleatoria()
-                    hora_apagado = generar_hora_aleatoria()
-                    
-                    # Escribir al archivo
-                    writer.writerow([
-                        id_registro, id_dispositivo, id_casa, timestamp, 
-                        consumo, color, hora_encendido, hora_apagado
-                    ])
+    #print(dispositivos)
+    functions_per_unit = {
+        "celsius" : generar_temperatura_aleatoria,
+        "kWh" : generar_consumo_energia_aleatorio ,
+        "locacion" : generar_locacion_aleatoria,
+        "state" : generar_estado_aleatorio,
+        "on_time" : generar_duracion_aleatoria,
+        "intentos_forcejeo" : (lambda  :  random.randint(1, 5) if random.random() < 0.01 else 0) ,
+        "hora_apertura" :  gen_random_timestamp
 
-                fecha_actual += timedelta(days=1)
+    }
+
+    units_per_device_type = { "aire_acondicionado": (
+            "celsius", 
+            "kWh", 
+            "locacion", 
+            "state", "on_time")     ,
+        "bombilla": ("kWh", "state", "on_time"),
+        "cerradura": ('intentos_forcejeo', "hora_apertura")
+                             }
+    with open("cassandra_logs.csv", "w", newline="", encoding="utf-8") as f:
+
+        writer = csv.writer(f)
+        writer.writerow([
+            "account", "device_type", "log_date", "device", 
+            "unit", "value", "comment"
+        ])
+        fecha_actual = FECHA_INICIAL
+        while fecha_actual <= FECHA_FINAL:
+            functions_per_unit["hora_apertura"] = lambda : gen_random_timestamp(fecha_actual)
+
+            for device in dispositivos:
+
+                if device["device_type"] not in units_per_device_type: continue
+                functions_per_unit['kWh'] = lambda : generar_consumo_energia_aleatorio(device['device_type'])
+                for unit in units_per_device_type[device["device_type"]]:
+                    writer.writerow(( device["account"], device['device_type'], gen_random_timestamp(fecha_actual), 
+                                    device['device_uuid'], unit, functions_per_unit[unit](), ''))
+            timedelta(days=10)
+    return
+    
     
     # Archivo para datos de cerraduras
-    with open("cassandra_cerraduras.csv", "w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        # Crear columnas
-        writer.writerow([
-            "id_registro", "id_dispositivo", "id_casa", "timestamp", 
-            "consumo_energia", "hora_apertura", "intentos_forcejeo"
-        ])
-        
-        # Para cada dispositivo
-        for id_dispositivo, tipo_dispositivo, id_casa in dispositivos:
-            # Si no es cerradura, se lo salta
-            if tipo_dispositivo != "cerradura":
-                continue
-                
-            # Generar múltiples registros por cada dispositivo
-            fecha_actual = FECHA_INICIAL
-            while fecha_actual <= FECHA_FINAL:
-                # Varias aperturas por día
-                num_aperturas = random.randint(0, 10)
-                # Para cada apertura
-                for _ in range(num_aperturas):
-                    # random
-                    id_registro = str(uuid.uuid4())
-                    hora = random.randint(0, 23)
-                    minuto = random.randint(0, 59)
-                    # Genera un timestamp aleatorio para el registro entre la fecha actual y la fecha final y le da formato
-                    timestamp = (fecha_actual + timedelta(hours=hora, minutes=minuto)).strftime("%Y-%m-%d %H:%M:%S")
-                    # random
-                    consumo = generar_consumo_energia_aleatorio("cerradura")
-                    # a 2 dígitos
-                    hora_apertura = f"{hora:02d}:{minuto:02d}"
-                    
-                    # Pocos intentos de forcejeo, mayormente 0
-                    intentos_forcejeo = 0
-                    if random.random() < 0.01:  # 1% de probabilidad de generar un intento de forcejeo
-                        intentos_forcejeo = random.randint(1, 5) # random entre 1 y 5 intentos
-                    
-                    # Escribir al archivo
-                    writer.writerow([
-                        id_registro, id_dispositivo, id_casa, timestamp, 
-                        consumo, hora_apertura, intentos_forcejeo
-                    ])
-                
-                fecha_actual += timedelta(days=1)
     
     # Archivo para aspiradoras
     with open("cassandra_aspiradoras.csv", "w", newline="", encoding="utf-8") as f:
@@ -659,8 +575,8 @@ def generar_datos_cassandra():
 def main():
     print(f"Generando datos para {NUM_CASAS} casas...")
     
-    generar_datos_mongodb()
-    generar_datos_dgraph()
+    #generar_datos_mongodb()
+    #generar_datos_dgraph()
     generar_datos_cassandra()
     
     print("\nProceso completado. Los archivos CSV se han guardado en el directorio actual.")
