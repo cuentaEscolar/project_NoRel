@@ -145,7 +145,6 @@ def call_select(session, select_stmt, data ):
 
 def insert_data(session):
     def insert_into_all(params):
-        print(params)
         for table in TABLE_NAMES: 
             stmt = session.prepare(INSERT_TEMPLATE.format(table))
             session.execute(
