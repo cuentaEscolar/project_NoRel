@@ -10,6 +10,9 @@ import random
 
 # Usamos esta librería para definir fechas
 from datetime import datetime, timedelta
+from cassandra.util import uuid_from_time
+from Conexion.printing_cassandra_utils import coerce_to_string
+from uuid import UUID
 
 import os
 import uuid
@@ -81,12 +84,8 @@ def generar_ruta_aleatoria():
 
 #Generar una string con una locacion de la casa aleatoria
 def generar_locacion_aleatoria():
-    locacion = ["habitación de invitados", "sala principal", "habitación principal", "cocina", "oficina"]
-    return random.choice(locacion)
-
-# Genera una string con una locación aleatoria
-def generar_locacion_aleatoria():
     locaciones = ["sala", "dormitorio principal", "dormitorio secundario", "cocina", "comedor", "estudio"]
+    locaciones.extend(["habitación de invitados", "sala principal", "habitación principal", "cocina", "oficina"])
     return random.choice(locaciones)
 
 # Generación de datos para MongoDB (configuración y metadata)
@@ -419,7 +418,7 @@ def load_csv_devices(file):
 
 
 def gen_random_timestamp(current_date):
-    return  (current_date + timedelta(hours=random.randint(0, 23), minutes=random.randint(0, 59))).strftime("%y-%m-%d %h:%m:%s")
+    return  (current_date + timedelta(hours=random.randint(0, 23), minutes=random.randint(0, 59)))
 # Generación de datos para Cassandra (datos de sensores en tiempo real)
 #
 def cassandra_log(timestamp, device):
@@ -453,14 +452,21 @@ def cassandra_log(timestamp, device):
     functions_per_unit['kWh'] = lambda : generar_consumo_energia_aleatorio(device['device_type'])
     result = []
     for unit in units_per_device_type[device["device_type"]]:
-        result.append (( device["account"], device['device_type'], gen_random_timestamp(timestamp), 
-                        device['device_uuid'], unit, functions_per_unit[unit](), ''))
+        result.append (( device["account"], device['device_type'], uuid_from_time(gen_random_timestamp(timestamp)), 
+                        UUID(device['device_uuid']), unit, coerce_to_string(functions_per_unit[unit]()), '') )
     return result
+
+def emit_cassandra_data_from_csv(the_csv, f):
+    dispositivos = load_csv_devices(the_csv)
+    fecha_actual = FECHA_INICIAL
+    while fecha_actual <= FECHA_FINAL:
+        for device in dispositivos:
+            for log in cassandra_log(fecha_actual, device):
+                f(log)
+        fecha_actual += timedelta(days=1)
 
 def generar_datos_cassandra():
     # Lee los dispositivos del archivo para MongoDB para mantener consistencia
-    dispositivos = load_csv_devices("mongodb_dispositivos.csv")
-    #print(dispositivos)
     with open("cassandra_logs.csv", "w", newline="", encoding="utf-8") as f:
 
         writer = csv.writer(f)
@@ -468,18 +474,10 @@ def generar_datos_cassandra():
             "account", "device_type", "log_date", "device", 
             "unit", "value", "comment"
         ])
-        fecha_actual = FECHA_INICIAL
-        while fecha_actual <= FECHA_FINAL:
-            for device in dispositivos:
-                for log in cassandra_log(fecha_actual, device):
-                    writer.writerow(log)
-            fecha_actual += timedelta(days=1)
+        emit_cassandra_data_from_csv("mongodb_dispositivos.csv", writer.writerow)
+    print("Datos para Cassandra generados correctamente.")
     return
     
-    # Archivo para aspiradoras
-    
-    
-    print("Datos para Cassandra generados correctamente.")
 
 # Función principal
 def main():

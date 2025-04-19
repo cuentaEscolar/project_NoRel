@@ -39,7 +39,7 @@ TABLE_TEMPLATE = """
         log_date TIMEUUID,
         device uuid,
         unit TEXT,
-        value DECIMAL,
+        value TEXT,
         comment TEXT,
         PRIMARY KEY ((account), log_date {} )
     ) WITH CLUSTERING ORDER BY (  log_date DESC {})
@@ -55,7 +55,7 @@ SELECT_TEMPLATE = """
 
 INSERT_TEMPLATE = """
         INSERT INTO {} 
-        (account , device_type , log_date , device , unit , value , comment),
+        (account , device_type , log_date , device , unit , value , comment)
         VALUES( ?,  ?,  ?,  ?,  ?,  ?,  ?  )
 """
 
@@ -145,6 +145,7 @@ def call_select(session, select_stmt, data ):
 
 def insert_data(session):
     def insert_into_all(params):
+        print(params)
         for table in TABLE_NAMES: 
             stmt = session.prepare(INSERT_TEMPLATE.format(table))
             session.execute(
