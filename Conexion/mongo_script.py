@@ -122,7 +122,7 @@ def generar_configuraciones(tipo, dispositivo_id, configuraciones_collection, fe
     fecha_actual = formatear_fecha(datetime.datetime.now())
     configuraciones_for_dispCollection = []
     configuraciones=[]
-    for i in range(random.randint(1, 5)): 
+    for _ in range(random.randint(1, 5)): 
         hora_on, hora_off = validar_hora_on_off()
         config_result = { 
             "_id": ObjectId(),
@@ -157,7 +157,7 @@ def generador(usuarios_collection, casas_collection, dispositivos_collection, co
             "correo": f"user{i}@example.com",
             "casas": user_casas
         }
-        for j in range(random.randint(1, 3)):
+        for _ in range(random.randint(1, 3)):
             casa_id = ObjectId()
             num_casa = count
             count += 1
