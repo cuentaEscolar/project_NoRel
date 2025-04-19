@@ -95,7 +95,7 @@ def generar_configuracion_especial(tipo, hora_on, hora_off):
     configuraciones = {
         "aspiradora": {
             "hora_autolimpieza": generar_hora_autolimpieza(hora_on, hora_off),
-            "ruta": "no lo se"
+            "ruta": random.choice(["Limpieza completa", "Limpieza ligera", "Limpieza de dormitorios", "Ruta sala","Ruta cocina", "Ruta completa", "Limpieza express", "Limpieza de noche"]),
         },
         "lavadora": {
             "ciclos_lavado": random.sample(["secado", "exprimir", "enjuague", "centrifugado", "lavado"],random.randint(1, 5)),
@@ -104,14 +104,16 @@ def generar_configuracion_especial(tipo, hora_on, hora_off):
             "temperatura_agua": random.choice(["fria", "caliente"])
         },
         "bombilla": {
-            "potencia": random.randint(10, 100),
+            "brillo": random.randint(10, 100),
             "color": generar_color_aleatorio()
         },
         "aire_acondicionado": {
-            "temperatura": random.randint(15, 30)
+            "temperatura": random.randint(15, 30),
+            "unidad": random.choice(["K", "C°", "F"])
         },
         "refrigerador": {
-            "temperatura": random.randint(0, 10)
+            "temperatura": random.randint(0, 10),
+            "unidad": random.choice(["K", "C°", "F"])
         }
     }
     return configuraciones.get(tipo, {"error": "No se encontro tipo de dispositivo"})
@@ -171,3 +173,10 @@ def generador(usuarios_collection, casas_collection, dispositivos_collection, co
         usuarios.append(usuarios_result)
     casas_collection.insert_many(casas)
     usuarios_collection.insert_many(usuarios)
+
+def poblar_mongodb(db):
+    usuarios_collection = db["usuarios"]
+    casas_collection = db["casas"]
+    dispositivos_collection = db["dispositivos"]
+    configuraciones_collection = db["configuraciones"]
+    generador(usuarios_collection, casas_collection, dispositivos_collection, configuraciones_collection)
