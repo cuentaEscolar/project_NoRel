@@ -173,15 +173,14 @@ def get_{}( acc, d, {}):
     select_stmt = (SELECT_QUERIES['{}'])
     return 0
     return call_select( session,  [{}] )
-            """
-    SELECT_TEMPLATE
+"""
     for table_name in TABLE_NAMES:
         get_x = get_template.format(table_name,
                                 ",".join(SHORTENED_TABLE_PARAMETERS[table_name]),
                                 table_name
                                     ,table_name
                                     )
-        print(exec(get_x))
+        exec(get_x)
         print(get_x)
         #print(help(curry_session))
         exec( call_template.format(table_name, ",".join( ["0"]* (2+len(SHORTENED_TABLE_PARAMETERS[table_name])) ) )  )
@@ -209,13 +208,11 @@ def get_session():
     return session
 
 def test_session(session):
-    stmt = "use iot;"
-    stmt = session.prepare(stmt)
+    session.execute(session.prepare("use iot;"))
+    stmt = session.prepare("describe tables;")
     result = (session.execute(stmt))
-    stmt = "describe tables;"
-    stmt = session.prepare(stmt)
-    result = (session.execute(stmt))
-    for r in result: print(r)
+    for r in result: 
+        print(r)
 
 if __name__ == "__main__":
     print(get_session.__doc__)

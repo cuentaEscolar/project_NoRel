@@ -2,3 +2,6 @@ cassandra-driver
 time_uuid
 uvicorn
 pymongo
+tox
+coverage
+pytest
