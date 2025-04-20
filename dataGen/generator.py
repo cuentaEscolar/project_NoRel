@@ -476,15 +476,14 @@ def generar_datos_cassandra():
         ])
         emit_cassandra_data_from_csv("mongodb_dispositivos.csv", writer.writerow)
     print("Datos para Cassandra generados correctamente.")
-    return
     
 
 # Función principal
 def main():
     print(f"Generando datos para {NUM_CASAS} casas...")
     
-    #generar_datos_mongodb()
-    #generar_datos_dgraph()
+    generar_datos_mongodb()
+    generar_datos_dgraph()
     generar_datos_cassandra()
     
     print("\nProceso completado. Los archivos CSV se han guardado en el directorio actual.")

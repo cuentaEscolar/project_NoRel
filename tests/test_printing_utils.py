@@ -1,6 +1,6 @@
 import pytest 
-from Conexion.printing_cassandra_utils import *
-
+import Conexion.printing_cassandra_utils as pc
+coerce_to_string = pc.coerce_to_string
 def test_coerce_to_string():
     assert coerce_to_string("a") == "a"
     assert coerce_to_string("") == ""
@@ -12,17 +12,17 @@ def test_coerce_to_string():
     assert coerce_to_string(No_Str(1)) is not None
 
 def test_taggers():
-    assert tr("") == "<tr></tr>"
-    assert tr("a") == "<tr>a</tr>"
-    assert td("") == "<td></td>"
-    assert td("a") == "<td>a</td>"
-    assert tabler("") == "<table></table>"
-    assert tabler("a") == "<table>a</table>"
+    assert pc.tr("") == "<tr></tr>"
+    assert pc.tr("a") == "<tr>a</tr>"
+    assert pc.td("") == "<td></td>"
+    assert pc.td("a") == "<td>a</td>"
+    assert pc.tabler("") == "<table></table>"
+    assert pc.tabler("a") == "<table>a</table>"
 
 def test_nice_print():
-    assert nice_print(None) == ""
-    assert nice_print([]) == ""
-    assert nice_print(["a"]) == "a"
-    assert nice_print(["1"]) == "1"
+    assert pc.nice_print(None) == ""
+    assert pc.nice_print([]) == ""
+    assert pc.nice_print(["a"]) == "a"
+    assert pc.nice_print(["1"]) == "1"
 
 
