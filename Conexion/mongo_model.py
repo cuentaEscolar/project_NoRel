@@ -7,8 +7,9 @@ def get_session():
     return client
 
 def base_populate(session ): 
-    db = client["intelligent_houses"]
+    db = session["intelligent_houses"]
     error_res = mongo_script.poblar_mongodb(db)
+    return error_res
 
 def test_session(session):
     result = session.listCollections()

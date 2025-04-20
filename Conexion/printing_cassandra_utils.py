@@ -59,7 +59,7 @@ def printable_table_descriptions(TABLE_NAMES, FULL_PARAMETERS):
             ( ( tr( td(table_name) + td( "Logs by " + nice_print(FULL_PARAMETERS[table_name] )) ) ) 
                 for table_name in TABLE_NAMES)
             ,
-            print( tr( th("Table name") + th("Description") ) )
+            ( tr( th("Table name") + th("Description") ) )
         )
     )
 
@@ -91,16 +91,8 @@ def print_requirements():
             ))
             c+=1
             newparameters.pop() 
-        #print( "<tr>"  )
-        #print( f"<th>  {'log by ' + ' '.join(FULL_PARAMETERS[table_name])}  </th>")
-        #print( "</tr>")
-        #print( "<tr>"  )
-        #print( f"<td> {table_create} </td>")
-        #print( "</tr>")
-        
     print("</table>")
     print(c)
-    #print(SELECT_QUERIES)
 
 def tabulator(s , tabs=1):
     print("\t"*tabs + s)

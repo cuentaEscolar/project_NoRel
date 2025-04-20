@@ -6,6 +6,7 @@ import random
 import uuid
 import inspect
 from cassandra.cluster import Cluster
+import Conexion.printing_cassandra_utils as pc
 import cassandra
 
 """
@@ -48,8 +49,7 @@ TABLE_TEMPLATE = """
 SELECT_TEMPLATE = """
     SELECT {}
     from {}
-    where account = ?
-    and 
+    where log_date >= ? and log_date <= ? 
     {};
 """
 
@@ -62,7 +62,7 @@ INSERT_TEMPLATE = """
 
 SHORTNAME_VALUES = {
     "a": "account" ,
-    "d":  "log_date ",
+    "d":  "log_date",
     "de": "device" ,
     "u": "unit" ,
     "v": "value"
@@ -120,12 +120,11 @@ def gen_selects( ):
 
     select_queries = {}
     for table in TABLE_NAMES:
-        #parameters = TABLE_PARAMETERS[table]
-        #print(TABLE_PARAMETERS[table])
         select_queries[table] = SELECT_TEMPLATE.format(
                 ",".join(FULL_PARAMETERS[table]),
                 table, 
-                "{}" 
+                "{}" ,
+            "?"
             )
 
     return select_queries
@@ -154,33 +153,54 @@ def insert_data(session):
 
 
 def create_gets(session):
+    globals()['session'] = session
+    """
+    Notice that only the log_date may be in a range.
+    Notice that if we only need a single date instead of a date_range
+    then we can simply set both sides of the interval to the same date 
+    """
+    print(session)
     call_template = """get_{}({})"""
     get_template = """
-def get_{}( acc, d, {}):
+def get_{}( account, d_s, d_e, {}):
     '''
-    acc is expected for every table
     one really does not want someone else to be able to see their devices 
     iot is plenty insecure as is 
     d can be a range date so it should be passed as a string
     '''
-    print(session)
-    select_stmt = (SELECT_QUERIES['{}'])
-    return 0
-    return call_select( session,  [{}] )
+    d_s = uuid.UUID(d_s)
+    d_e = uuid.UUID(d_e)
+    select_stmt = '''SELECT {}
+        from {}
+        where log_date >= ? and log_date <= ? 
+        {};'''
+    acc = account 
+    a = account
+    stmt = session.prepare(select_stmt)
+    return session.execute(stmt, [d_s, d_e, {}])
 """
+    get_method_names = []
     for table_name in TABLE_NAMES:
         get_x = get_template.format(table_name,
-                                ",".join(SHORTENED_TABLE_PARAMETERS[table_name]),
-                                table_name
-                                    ,table_name
+                                ",".join([x for x in SHORTENED_TABLE_PARAMETERS[table_name] if x != "d" ])
+                                ,  
+                                ",".join(FULL_PARAMETERS[table_name])
+                                ,
+                                f"{table_name}",
+                                " and " + " and ".join(
+                                list( map( lambda x : f"{x} = ?" , [ x for x in FULL_PARAMETERS[table_name] if x !="log_date"] ) )
+                                )
+                                ,
+
+                            ",".join([ x for x in SHORTENED_TABLE_PARAMETERS[table_name] if x !="log_date"]) + "a"
                                     )
-        exec(get_x)
-        print(get_x)
         #print(help(curry_session))
-        exec( call_template.format(table_name, ",".join( ["0"]* (2+len(SHORTENED_TABLE_PARAMETERS[table_name])) ) )  )
-        exec(f"print( help(get_{table_name}))")
+        #exec( call_template.format(table_name, ",".join( ["0"]* (2+len(SHORTENED_TABLE_PARAMETERS[table_name])) ) )  )
+        exec(get_x, globals())
+        get_method_names.append(f"get_{table_name}")
         
-    print_my_functions()
+    return get_method_names
+    #print_my_functions()
         
     
 
@@ -212,14 +232,5 @@ def test_session(session):
 
 
 if __name__ == "__main__":
-    pass
-    #print(get_session.__doc__)
-    #print_table_descriptions()
-
-    #print_tables()
-    #print_requirements()
-    #session = get_session()
-    #create_gets(session)
-    #print("done")
-    #print_my_functions()
-
+    session = (get_session())
+    create_gets(session)
