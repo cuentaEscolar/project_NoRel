@@ -1,6 +1,7 @@
 import random
 import datetime
 from bson import ObjectId
+from pymongo import ASCENDING, TEXT
 
 NUM_USUARIOS = 10
 
@@ -141,8 +142,24 @@ def generar_configuraciones(tipo, dispositivo_id, configuraciones_collection, fe
     configuraciones_collection.insert_many(configuraciones)
     return configuraciones_for_dispCollection
 
-def crearIndices(db):
-    return
+def crear_indices(db):
+    db.configuraciones.create_index([("nombre_configuracion", TEXT)])
+   
+    db.dispositivos.create_index([("nombre_dispositivo", TEXT)])
+    
+    db.dispositivos.create_index([("tipo", ASCENDING)])
+  
+    db.casas.create_index([("num_casa", ASCENDING)])
+    
+    db.configuraciones.create_index([("estado_configuracion", ASCENDING)])
+    
+    db.dispositivos.create_index([("estado", ASCENDING)])
+   
+    db.configuraciones.create_index([("fecha_ultima_modificacion", ASCENDING)])
+    
+    db.dispositivos.create_index([("fecha_instalacion", ASCENDING)])
+  
+    db.configuraciones.create_index([("hora_on", ASCENDING)])
 
 def generador(usuarios_collection, casas_collection, dispositivos_collection, configuraciones_collection):
     usuarios = []

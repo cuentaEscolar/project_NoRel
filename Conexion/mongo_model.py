@@ -6,9 +6,10 @@ def get_session():
     client = MongoClient('mongodb://localhost:27017/')
     return client
 
-def base_populate(session ): 
+def base_populate(session): 
     db = session["intelligent_houses"]
-    error_res = mongo_script.poblar_mongodb(db)
+    error_res = Conexion.mongo_script.poblar_mongodb(db)
+    Conexion.mongo_script.crear_indices(db)
     return error_res
 
 def test_session(session):
