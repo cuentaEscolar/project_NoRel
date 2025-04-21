@@ -180,3 +180,7 @@ def poblar_mongodb(db):
     dispositivos_collection = db["dispositivos"]
     configuraciones_collection = db["configuraciones"]
     return generador(usuarios_collection, casas_collection, dispositivos_collection, configuraciones_collection)
+
+#ENDPOINT
+##getter que return un dispositivo y otro que devuelva una configuracion 
+##setter para generar datos
