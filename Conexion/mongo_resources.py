@@ -48,3 +48,44 @@ class DispositivosResource:
             print(f"Error en on_get: {e}")
         
 
+class ConfiguracionesResource:
+    def __init__(self, db):
+        self.db = db
+
+    async def on_get(self, req, resp):
+        try:
+            #Recuperar los parametros dados por el usuario
+            id = req.get_param('_id')
+            id_dispositivo = req.get_param('id_dispositivo')
+            nombre_configuracion = req.get_param('nombre_configuracion')
+            estado_configuracion = req.get_param('estado_configuracion')
+            hora_on = req.get_param('hora_on')
+            hora_off = req.get_param('hora_off')
+            fecha_ultima_modificacion = req.get_param('fecha_ultima_modificacion')
+
+            #crear queries con los parametros
+            query = {}
+            if id is not None:
+                query['_id'] = ObjectId(id)
+            if id_dispositivo is not None:
+                query['id_dispositivo'] = ObjectId(id_dispositivo)
+            if nombre_configuracion is not None:
+                query['$text'] = {'$search': nombre_configuracion}
+            if estado_configuracion is not None:
+                query['estado_configuracion'] = estado_configuracion
+            if hora_on is not None:
+                query['hora_on'] = {"$gte": hora_on}
+            if fecha_ultima_modificacion is not None:
+                query['fecha_ultima_modificacion'] = {"$gte": fecha_ultima_modificacion}
+            
+            configuraciones = self.db.configuraciones.find(query)
+            configuraciones_list = []
+            for configuracion in configuraciones:
+                configuracion['_id'] = str(configuracion['_id'])
+                configuracion['id_dispositivo'] = str(configuracion['id_dispositivo'])
+                configuraciones_list.append(configuracion)
+            resp.media = configuraciones_list
+            resp.status = falcon.HTTP_200
+        except Exception as e:
+            resp.media = {"error": str(e)}
+            print(f"Error en on_get: {e}")

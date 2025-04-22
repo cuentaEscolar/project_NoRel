@@ -14,10 +14,24 @@ def get_dispositivos(**parameters):
     response = requests.get(endpoint, params=params)
     if response.ok:
         json_resp = response.json()
-        for disp in json_resp:
-            print_x(disp)
+        return json_resp
     else:
         print(f"Error: {response}")
+        return
+
+def get_configuraciones(**parameters):
+    suffix = "/configuraciones"
+    endpoint = INTELLIGENT_HOUSE_API_URL + suffix
+    params = {key: value for key, value in parameters.items() if value is not None}
+
+    response = requests.get(endpoint, params=params)
+    if response.ok:
+        json_resp = response.json()
+        for disp in json_resp:
+            return json_resp
+    else:
+        print(f"Error: {response}")
+        return
     
 def print_x(x):
     for k in x.keys():
