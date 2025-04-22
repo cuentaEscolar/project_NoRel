@@ -1,9 +1,10 @@
 import random
 import datetime
 from bson import ObjectId
+
 from pymongo import ASCENDING, TEXT
 
-NUM_USUARIOS = 10
+NUM_USUARIOS = 1
 
 def generar_hora():
     hora = random.randint(0, 23)
@@ -96,7 +97,7 @@ def generar_configuracion_especial(tipo, hora_on, hora_off):
     configuraciones = {
         "aspiradora": {
             "hora_autolimpieza": generar_hora_autolimpieza(hora_on, hora_off),
-            "ruta": random.choice(["Limpieza completa", "Limpieza ligera", "Limpieza de dormitorios", "Ruta sala","Ruta cocina", "Ruta completa", "Limpieza express", "Limpieza de noche"]),
+            "ruta": random.choice(["completa", "sala principal", "habitaciones", "cocina", "personalizada","Limpieza completa", "Limpieza ligera", "Limpieza de dormitorios", "Ruta sala","Ruta cocina", "Ruta completa", "Limpieza express", "Limpieza de noche"]),
         },
         "lavadora": {
             "ciclos_lavado": random.sample(["secado", "exprimir", "enjuague", "centrifugado", "lavado"],random.randint(1, 5)),
@@ -198,6 +199,3 @@ def poblar_mongodb(db):
     configuraciones_collection = db["configuraciones"]
     return generador(usuarios_collection, casas_collection, dispositivos_collection, configuraciones_collection)
 
-#ENDPOINT
-##getter que return un dispositivo y otro que devuelva una configuracion 
-##setter para generar datos

@@ -5,3 +5,5 @@ pymongo
 tox
 coverage
 pytest
+falcon
+requests

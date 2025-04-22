@@ -1,4 +1,4 @@
-from Conexion import mongo_model 
+from Conexion import mongo_model, mongo_gets
 import pymongo 
 
 class Test_mongo_model():
@@ -18,3 +18,7 @@ class Test_mongo_model():
         #for table in created_tables:
             #assert table.name in expected_tables
 
+#python -m tests.test_mongo_model
+client = mongo_model.get_session()
+##print(mongo_model.base_populate(client))
+mongo_gets.get_dispositivos(**{"tipo": "lavadora"})
