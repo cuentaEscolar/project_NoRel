@@ -6,8 +6,9 @@ from cassandra.cluster import Cluster #type: ignore
 
 from pymongo import MongoClient #type:ignore
 
-
-
+from Conexion.dgraph_connection import DgraphConnection
+from Conexion.dgraph_loader import load_data_to_dgraph
+from Conexion.dgraph_model import set_schema
 
 # Set logger
 log = logging.getLogger()
@@ -104,10 +105,18 @@ def poblar_datos_mongo(db):
     csv_a_mongo("mongodb_configuraciones.csv", db["configuraciones"])
 
 
+##CONEXION DGRAPH
+def initialize_dgraph():
+    connection = DgraphConnection()
+    client = connection.connect()
+    set_schema(client)
+    return client
+
 
 def main():
     mongo_db = conexion_mongo()
     cassandra_session = conexion_cassandra()
+    dgraph_client = initialize_dgraph()
 
     while(True):
         print_menu()
