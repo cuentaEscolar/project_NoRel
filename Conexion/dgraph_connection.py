@@ -1,7 +1,4 @@
 import pydgraph
-import logging
-
-logger = logging.getLogger(__name__)
 
 class DgraphConnection:
     def __init__(self, host='localhost', port='9080'):
@@ -12,11 +9,10 @@ class DgraphConnection:
 
     def connect(self):
         try:
-            self.client_stub = pydgraph.DgraphClientStub('localhost:9080')
+            self.client_stub = pydgraph.DgraphClientStub(f'{self.host}:{self.port}')
             self.client = pydgraph.DgraphClient(self.client_stub)
             return self.client
         except Exception as e:
-            logger.error(f"Failed to connect to Dgraph: {e}")
             raise
 
     def close(self):

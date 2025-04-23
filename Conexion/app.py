@@ -107,10 +107,18 @@ def poblar_datos_mongo(db):
 
 ##CONEXION DGRAPH
 def initialize_dgraph():
-    connection = DgraphConnection()
-    client = connection.connect()
-    set_schema(client)
-    return client
+    try:
+        logging.info("Initializing Dgraph connection")
+        connection = DgraphConnection()
+        client = connection.connect()
+        
+        # Intentar establecer el schema
+        set_schema(client)
+        logging.info("Dgraph initialization successful")
+        return client
+    except Exception as e:
+        logging.error(f"Failed to initialize Dgraph: {e}")
+        raise
 
 
 def main():
