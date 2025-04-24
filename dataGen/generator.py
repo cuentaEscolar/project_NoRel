@@ -207,202 +207,97 @@ def generar_datos_mongodb():
 
 # Generación de datos para Dgraph (relaciones entre dispositivos)
 def generar_datos_dgraph():
-    # Contrario a las otras 2 funciones generadoras, esta produce archivos JSON en vez de CSV
-    # Ya que esto es más sencillo para insertar datos comparado a usar CSV directamente
-
-    # Sin embargo, esta cosa genera DEMASIADA información, con 100 casas genera un JSON de más de 50k lineas
-    # No sé si se me fue la mano con algún ciclo o algo así pero el archivo generado es demasiado grande
-    # Tal vez sea bueno revisar esto en el futuro
-
-    # Lista que contendrá todos los nodos y relaciones
-    dgraph_data = {"set": []}
+    """
+    Genera archivos CSV para DGraph con la siguiente estructura (simplifica la carga de datos a Dgraph):
+    - casas.csv: Datos básicos de las casas
+    - dispositivos.csv: Información de todos los dispositivos
+    - clusters.csv: Información de los clusters
+    - relaciones.csv: Conexiones entre nodos (casa-dispositivo, cluster-dispositivo)
+    """
     
-    # Leer dispositivos existentes del archivo MongoDB
-    dispositivos = []
-    with open("mongodb_dispositivos.csv", "r", newline="", encoding="utf-8") as f_disp:
-        reader = csv.DictReader(f_disp)
-        for row in reader:
-            dispositivos.append((row["id_dispositivo"], row["tipo_dispositivo"], row["id_casa"]))
-    
-    # Generar nodos para las casas
-    casas = {}
-    # Para cada casa extraida del archivo de mongoDB generar los nodos de casa para DGraph
-    for casa_id in range(1, NUM_CASAS + 1):
-        casa_uid = f"_:casa_{casa_id}"
-        casas[casa_id] = casa_uid
-        casa_node = {
-            "uid": casa_uid,
-            "tipo": "casa",
-            "id_casa": casa_id,
-            "nombre": f"Casa_{casa_id}",
-            "tiene_dispositivos": []
-        }
-        dgraph_data["set"].append(casa_node)
-    
-    # Generar nodos para los dispositivos y conectarlos a sus casas
-    dispositivos_nodes = {}
-    # Diccionario para mantener registro de qué dispositivos están en qué ubicación
-    dispositivos_por_ubicacion = {}
-    
-    for id_dispositivo, tipo_dispositivo, id_casa in dispositivos:
-        dispositivo_uid = f"_:dispositivo_{id_dispositivo[:8]}"
-        dispositivos_nodes[id_dispositivo] = dispositivo_uid
+    # Crear archivos CSV con sus encabezados
+    with open("dgraph_casas.csv", "w", newline="", encoding="utf-8") as f_casas, \
+         open("dgraph_dispositivos.csv", "w", newline="", encoding="utf-8") as f_disp, \
+         open("dgraph_clusters.csv", "w", newline="", encoding="utf-8") as f_clusters, \
+         open("dgraph_relaciones.csv", "w", newline="", encoding="utf-8") as f_rel:
         
-        # Asignar una ubicación para todos los tipos de dispositivos que la necesitan
-        ubicacion = None
-        # Si es alguno de estos 3 dispositivos, generar ubicación al azar
-        if tipo_dispositivo in ["aire_acondicionado", "bombilla", "cerradura"]:
-            ubicacion = generar_locacion_aleatoria()
-            # Registrar el dispositivo en su ubicación
-            if (id_casa, ubicacion) not in dispositivos_por_ubicacion:
-                dispositivos_por_ubicacion[(id_casa, ubicacion)] = []
-            dispositivos_por_ubicacion[(id_casa, ubicacion)].append((id_dispositivo, dispositivo_uid))
+        # Definir los escritores CSV
+        writer_casas = csv.writer(f_casas)
+        writer_disp = csv.writer(f_disp)
+        writer_clusters = csv.writer(f_clusters)
+        writer_rel = csv.writer(f_rel)
         
-        # Crear nodo del dispositivo
-        dispositivo_node = {
-            "uid": dispositivo_uid,
-            "tipo": "dispositivo",
-            "id_dispositivo": id_dispositivo,
-            "categoria": tipo_dispositivo,
-            "estado": generar_estado_aleatorio(),
-            "pertenece_a": [{"uid": casas[int(id_casa)]}]
-        }
+        # Escribir encabezados
+        writer_casas.writerow(["id_casa", "nombre"])
+        writer_disp.writerow(["id_dispositivo", "categoria", "estado", "temperatura", "modo", 
+                            "ubicacion", "brillo", "color", "potencia", "ruta"])
+        writer_clusters.writerow(["id_cluster", "tipo", "categoria", "nombre"])
+        writer_rel.writerow(["origen_id", "tipo_relacion", "destino_id"])
         
-        # Agregar configuraciones específicas según el tipo de dispositivo
-        # Para ACs
-        if tipo_dispositivo == "aire_acondicionado":
-            dispositivo_node.update({
-                "temperatura": f"{generar_temperatura_aleatoria()}°C",
-                "modo": random.choice(["auto", "manual"]),
-                "ubicacion": ubicacion
-            })
-        # Para bombillas
-        elif tipo_dispositivo == "bombilla":
-            dispositivo_node.update({
-                "brillo": f"{random.randint(10, 100)}%",
-                "color": generar_color_aleatorio(),
-                "ubicacion": ubicacion
-            })
-        # Para aspiradoras
-        elif tipo_dispositivo == "aspiradora":
-            dispositivo_node.update({
-                "potencia": random.randint(1, 3),
-                "ruta": generar_ruta_aleatoria()
-            })
-        # Para refrigeradores
-        elif tipo_dispositivo == "refrigerador":
-            dispositivo_node.update({
-                "temperatura": f"{generar_temperatura_aleatoria(2, 8)}°C"
-            })
-        # Cerraduras
-        elif tipo_dispositivo == "cerradura":
-            dispositivo_node.update({
-                "ubicacion": ubicacion
-            })
+        # Leer dispositivos existentes del archivo MongoDB
+        dispositivos = []
+        with open("mongodb_dispositivos.csv", "r", newline="", encoding="utf-8") as f_mongo_disp:
+            reader = csv.DictReader(f_mongo_disp)
+            for row in reader:
+                dispositivos.append((row["id_dispositivo"], row["tipo_dispositivo"], row["id_casa"]))
         
-        # Agregar el dispositivo a la lista de dispositivos de la casa
-        casa_node = next(casa for casa in dgraph_data["set"] 
-                        if casa["uid"] == casas[int(id_casa)])
-        casa_node["tiene_dispositivos"].append({"uid": dispositivo_uid})
-        
-        dgraph_data["set"].append(dispositivo_node)
-    
-    # Generar clusters por habitación
-    habitaciones = ["sala", "cocina", "dormitorio_principal", "baño"]
-    for casa_id in range(1, NUM_CASAS + 1):
-        for habitacion in habitaciones:
-            if random.random() > 0.3:  # 70% de probabilidad de tener cluster
-                cluster_uid = f"_:cluster_{casa_id}_{habitacion}"
-                cluster_node = {
-                    "uid": cluster_uid,
-                    "tipo": "cluster",
-                    "categoria": "habitacion",
-                    "nombre": f"{habitacion.capitalize()}_{casa_id}",
-                    "pertenece_a": [{"uid": casas[casa_id]}],
-                    "contiene_dispositivos": []
-                }
+        # Generar datos para cada casa
+        for casa_id in range(1, NUM_CASAS + 1):
+            # Escribir datos de la casa
+            casa_id_str = f"casa_{casa_id}"
+            writer_casas.writerow([casa_id_str, f"Casa {casa_id}"])
+            
+            # Filtrar dispositivos de esta casa
+            disp_casa = [d for d in dispositivos if int(d[2]) == casa_id]
+            
+            # Escribir dispositivos y su relación con la casa
+            for id_disp, tipo_disp, _ in disp_casa:
+                # Generar datos específicos según el tipo de dispositivo
+                estado = generar_estado_aleatorio()
+                temp = generar_temperatura_aleatoria() if tipo_disp in ["aire_acondicionado", "refrigerador"] else ""
+                modo = random.choice(["auto", "manual"]) if tipo_disp == "aire_acondicionado" else ""
+                ubicacion = generar_locacion_aleatoria() if tipo_disp in ["aire_acondicionado", "bombilla", "cerradura"] else ""
+                brillo = f"{random.randint(10, 100)}%" if tipo_disp == "bombilla" else ""
+                color = generar_color_aleatorio() if tipo_disp == "bombilla" else ""
+                potencia = random.randint(1, 3) if tipo_disp == "aspiradora" else ""
+                ruta = generar_ruta_aleatoria() if tipo_disp == "aspiradora" else ""
                 
-                # Asignar dispositivos al cluster basado en su ubicación
-                for id_dispositivo, tipo_dispositivo, id_casa in dispositivos:
-                    if int(id_casa) == casa_id:
-                        # Obtener el nodo del dispositivo
-                        dispositivo_node = next(
-                            d for d in dgraph_data["set"] 
-                            if d.get("id_dispositivo") == id_dispositivo
-                        )
-                        
-                        # Verificar si el dispositivo tiene ubicación y si corresponde a esta habitación
-                        if ("ubicacion" in dispositivo_node and 
-                            dispositivo_node["ubicacion"].lower().replace(" ", "_") == habitacion):
-                            cluster_node["contiene_dispositivos"].append(
-                                {"uid": dispositivos_nodes[id_dispositivo]}
-                            )
+                # Escribir dispositivo
+                writer_disp.writerow([id_disp, tipo_disp, estado, temp, modo, ubicacion, 
+                                    brillo, color, potencia, ruta])
                 
-                dgraph_data["set"].append(cluster_node)
-    
-    # Generar clusters de categoría
-    tipos_funcionales = ["iluminacion", "climatizacion", "seguridad", "entretenimiento"]
-    for casa_id in range(1, NUM_CASAS + 1):
-        for tipo in tipos_funcionales:
-            if random.random() > 0.5:  # 50% de probabilidad de tener cluster
-                cluster_uid = f"_:cluster_{casa_id}_{tipo}"
-                cluster_node = {
-                    "uid": cluster_uid,
-                    "tipo": "cluster",
-                    "categoria": "funcional",
-                    "nombre": f"{tipo.capitalize()}_{casa_id}",
-                    "pertenece_a": [{"uid": casas[casa_id]}],
-                    "agrupa_dispositivos": []
-                }
-                
-                # Asignar dispositivos al cluster según su función
-                for id_dispositivo, tipo_dispositivo, id_casa in dispositivos:
-                    if int(id_casa) == casa_id:
-                        if ((tipo == "iluminacion" and tipo_dispositivo == "bombilla") or
-                            (tipo == "climatizacion" and tipo_dispositivo in ["aire_acondicionado", "refrigerador"]) or
-                            (tipo == "seguridad" and tipo_dispositivo == "cerradura")):
-                            if random.random() > 0.3:  # 70% de probabilidad de asignación
-                                cluster_node["agrupa_dispositivos"].append(
-                                    {"uid": dispositivos_nodes[id_dispositivo]}
-                                )
-                
-                dgraph_data["set"].append(cluster_node)
-    
-    # Generar relaciones entre dispositivos
-    for id_dispositivo1, tipo_dispositivo1, id_casa1 in dispositivos:
-        # Filtrar dispositivos de la misma casa
-        dispositivos_misma_casa = [
-            (id2, tipo2) for id2, tipo2, casa2 in dispositivos 
-            if casa2 == id_casa1 and id2 != id_dispositivo1
-        ]
-        
-        # Generar conexiones aleatorias
-        num_conexiones = random.randint(0, min(3, len(dispositivos_misma_casa)))
-        for _ in range(num_conexiones):
-            if dispositivos_misma_casa:
-                id_dispositivo2, tipo_dispositivo2 = random.choice(dispositivos_misma_casa)
-                dispositivos_misma_casa.remove((id_dispositivo2, tipo_dispositivo2))
-                
-                # Si es alguno de estos dispositivos, se agrega esta relación
-                if ((tipo_dispositivo1 == "aire_acondicionado" and tipo_dispositivo2 == "bombilla") or 
-                    (tipo_dispositivo1 == "bombilla" and tipo_dispositivo2 == "aire_acondicionado")):
-                    tipo_relacion = "sincroniza_con"
+                # Escribir relación casa-dispositivo
+                writer_rel.writerow([casa_id_str, "tiene_dispositivos", id_disp])
+            
+            # Generar clusters por habitación
+            habitaciones = ["sala", "cocina", "dormitorio_principal", "baño"]
+            for hab in habitaciones:
+                if random.random() > 0.3:  # 70% probabilidad de tener cluster
+                    cluster_id = f"cluster_{casa_id}_{hab}"
+                    writer_clusters.writerow([cluster_id, "cluster", "habitacion", f"{hab.capitalize()}_{casa_id}"])
                     
-                    # Agregar la relación al dispositivo origen
-                    dispositivo_origen = next(d for d in dgraph_data["set"] 
-                                           if d["uid"] == dispositivos_nodes[id_dispositivo1])
-                    if tipo_relacion not in dispositivo_origen:
-                        dispositivo_origen[tipo_relacion] = []
-                    dispositivo_origen[tipo_relacion].append({
-                        "uid": dispositivos_nodes[id_dispositivo2],
-                        "peso": round(random.uniform(0.1, 1.0), 2)
-                    })
+                    # Asignar dispositivos al cluster según ubicación
+                    for id_disp, tipo_disp, _ in disp_casa:
+                        if random.random() > 0.3:  # 70% probabilidad de asignación
+                            writer_rel.writerow([cluster_id, "contiene_dispositivos", id_disp])
+            
+            # Generar clusters funcionales
+            tipos_funcionales = ["iluminacion", "climatizacion", "seguridad", "entretenimiento"]
+            for tipo in tipos_funcionales:
+                if random.random() > 0.5:  # 50% probabilidad de tener cluster
+                    cluster_id = f"cluster_{casa_id}_{tipo}"
+                    writer_clusters.writerow([cluster_id, "cluster", "funcional", f"{tipo.capitalize()}_{casa_id}"])
+                    
+                    # Asignar dispositivos según función
+                    for id_disp, tipo_disp, _ in disp_casa:
+                        if ((tipo == "iluminacion" and tipo_disp == "bombilla") or
+                            (tipo == "climatizacion" and tipo_disp in ["aire_acondicionado", "refrigerador"]) or
+                            (tipo == "seguridad" and tipo_disp == "cerradura")):
+                            if random.random() > 0.3:  # 70% probabilidad de asignación
+                                writer_rel.writerow([cluster_id, "agrupa_dispositivos", id_disp])
     
-    # Guardar todo en un solo archivo JSON
-    with open("dgraph_data.json", "w", encoding="utf-8") as f:
-        json.dump(dgraph_data, f, indent=2, ensure_ascii=False)
-    
-    print("Datos para Dgraph generados correctamente en formato de mutación.")
+    print("Datos para Dgraph generados correctamente en formato CSV.")
+
 
 def load_csv_devices(file):
     dispositivos = []
@@ -495,4 +390,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

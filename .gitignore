@@ -6,6 +6,15 @@ __pycache__/
 # C extensions
 *.so
 
+# dataGen files
+/dataGen/cassandra_logs.csv
+/dataGen/dgraph_casas.csv
+/dataGen/dgraph_clusters.csv
+/dataGen/dgraph_dispositivos.csv
+/dataGen/dgraph_relaciones.csv
+/dataGen/mongodb_configuraciones.csv
+/dataGen/mongodb_dispositivos.csv
+
 # Distribution / packaging
 .Python
 build/

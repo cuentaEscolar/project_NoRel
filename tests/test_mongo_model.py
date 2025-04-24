@@ -21,4 +21,11 @@ class Test_mongo_model():
 #python -m tests.test_mongo_model
 client = mongo_model.get_session()
 ##print(mongo_model.base_populate(client))
-mongo_gets.get_dispositivos(**{"tipo": "lavadora"})
+json_resp_disp = mongo_gets.get_dispositivos()
+json_resp_conf = mongo_gets.get_configuraciones()
+
+# for disp in json_resp_disp:
+#     mongo_gets.print_x(disp)
+
+# for conf in json_resp_conf:
+#     mongo_gets.print_x(conf)
