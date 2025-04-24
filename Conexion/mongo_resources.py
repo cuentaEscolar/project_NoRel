@@ -89,3 +89,72 @@ class ConfiguracionesResource:
         except Exception as e:
             resp.media = {"error": str(e)}
             print(f"Error en on_get: {e}")
+
+class CasasResource:
+    def __init__(self, db):
+        self.db = db
+
+    async def on_get(self, req, resp):
+        try:
+            #Recuperar los parametros dados por el usuario
+            id = req.get_param('_id')
+            id_usuario = req.get_param('id_usuario')
+            num_casa = req.get_param_as_int('num_casa')
+
+            #crear queries con los parametros
+            query = {}
+            if id is not None:
+                query['_id'] = ObjectId(id)
+            if id_usuario is not None:
+                query['id_usuario'] = ObjectId(id_usuario)
+            if num_casa is not None:
+                query['num_casa'] = num_casa
+            
+            casas = self.db.casas.find(query)
+            casas_list = []
+            for casa in casas:
+                casa['_id'] = str(casa['_id'])
+                casa['id_usuario'] = str(casa['id_usuario'])
+                if 'dispositivos' in casa and isinstance(casa['dispositivos'], dict):
+                    for tipo, dispositivos in casa['dispositivos'].items():
+                        for dispositivo in dispositivos:
+                            if 'id_dispositivo' in dispositivo:
+                                dispositivo['id_dispositivo'] = str(dispositivo['id_dispositivo'])
+                casas_list.append(casa)
+            resp.media = casas_list
+            resp.status = falcon.HTTP_200
+        except Exception as e:
+            resp.media = {"error": str(e)}
+            print(f"Error en on_get: {e}")
+
+class UsuariosResource:
+    def __init__(self, db):
+        self.db = db
+
+    async def on_get(self, req, resp):
+        try:
+            #Recuperar los parametros dados por el usuario
+            id = req.get_param('_id')
+            username = req.get_param('username')
+
+            #crear queries con los parametros
+            query = {}
+            if id is not None:
+                query['_id'] = ObjectId(id)
+            if username is not None:
+                query['username'] = username
+            
+            usuarios = self.db.usuarios.find(query)
+            usuarios_list = []
+            for usuario in usuarios:
+                usuario['_id'] = str(usuario['_id'])
+                if 'casas' in usuario and isinstance(usuario['casas'], list):
+                    for casa in usuario['casas']:
+                        if 'id_casa' in casa:
+                            casa['id_casa'] = str(casa['id_casa'])
+                usuarios_list.append(usuario)
+            resp.media = usuarios_list
+            resp.status = falcon.HTTP_200
+        except Exception as e:
+            resp.media = {"error": str(e)}
+            print(f"Error en on_get: {e}")

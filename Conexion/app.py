@@ -66,11 +66,17 @@ def print_cassandra_menu():
 
 def print_mongo_menu():
     mdb_options = {
-        1: "Get user information",
-        2: "Get device on/off time settings",
-        3: "Get device status",
-        4: "Get device configuration",
-        5: "Search configurations by name"
+        1: "Información usuario",
+        2: "Configuracion on/off de dispositivo por tipo",
+        3: "Dipsositivos por tipo y estado",
+        4: "Configuraciones de un dispositivo",
+        5: "Configuraciones por nombre",
+        6: "Configuracione completas por id",
+        7: "Configuraciones por fecha de modificacion",
+        8: "Configuraciones por horario de encendido",
+        9: "Cantidad de dispositivos por tipo",
+        10: "Dispositivos por fecha de instalación",
+        11: "Configuraciones por e"
     }
     for key in mdb_options.keys():
         print('    ', key, '--', mdb_options[key])
@@ -89,22 +95,6 @@ def print_dgraph_menu():
 
 
 
-def csv_a_mongo(archivo_csv, coleccion):
-    with open(archivo_csv, "r", encoding="utf-8") as f:
-        lector = csv.DictReader(f)
-        datos = []
-        for fila in lector:
-            datos.append(fila)
-        if datos:
-            coleccion.insert_many(datos)
-        print(f"Se importaron {len(datos)} registros desde {archivo_csv} a MongoDB")
-
-def poblar_datos_mongo(db):
-    csv_a_mongo("mongodb_dispositivos.csv", db["dispositivos"])
-    csv_a_mongo("mongodb_configuraciones.csv", db["configuraciones"])
-
-
-
 def main():
     mongo_db = conexion_mongo()
     cassandra_session = conexion_cassandra()
@@ -119,6 +109,7 @@ def main():
             print_cassandra_menu()
             cass_option = int(input('Enter your choice: '))
         if option == 2:
+            num_casa = int(input("Introduce tu número de casa: "))
             print_mongo_menu()
             mongo_option = int(input("Enter your choice: "))
         if option == 3:

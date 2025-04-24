@@ -1,4 +1,4 @@
-from Conexion import mongo_model, mongo_gets
+from Conexion import mongo_model, mongo_gets, mongo_queries
 import pymongo 
 
 class Test_mongo_model():
@@ -21,11 +21,24 @@ class Test_mongo_model():
 #python -m tests.test_mongo_model
 client = mongo_model.get_session()
 ##print(mongo_model.base_populate(client))
-json_resp_disp = mongo_gets.get_dispositivos()
-json_resp_conf = mongo_gets.get_configuraciones()
+# json_resp_disp = mongo_gets.get_dispositivos()
+# json_resp_conf = mongo_gets.get_configuraciones()
+# json_resp_casas = mongo_gets.get_casas()
+# json_resp_usuarios = mongo_gets.get_usuarios()
 
 # for disp in json_resp_disp:
 #     mongo_gets.print_x(disp)
 
 # for conf in json_resp_conf:
 #     mongo_gets.print_x(conf)
+
+# for ca in json_resp_casas:
+#     mongo_gets.print_x(ca)
+
+# for user in json_resp_usuarios:
+#     mongo_gets.print_x(user)
+
+##PRUEBAS DE QUERIES
+#1
+# mongo_queries.get_usuario_info()
+id_casa = mongo_queries.get_id_casa(1)

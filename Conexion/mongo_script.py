@@ -172,7 +172,7 @@ def generador(usuarios_collection, casas_collection, dispositivos_collection, co
         usuarios_result = {
             "_id": user_id,
             "username": f"user_{i}",
-            "correo": f"user{i}@example.com",
+            "correo": f"user{i}@gmail.com",
             "casas": user_casas
         }
         for _ in range(random.randint(1, 3)):

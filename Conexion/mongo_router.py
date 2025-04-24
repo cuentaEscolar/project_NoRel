@@ -4,7 +4,7 @@ import logging
 
 from Conexion.mongo_model import get_database, get_session
 
-from Conexion.mongo_resources import DispositivosResource, ConfiguracionesResource
+from Conexion.mongo_resources import DispositivosResource, ConfiguracionesResource, CasasResource, UsuariosResource
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -26,7 +26,11 @@ app = falcon.asgi.App(middleware=[LoggingMiddleware()])
 # Instantiate the resources
 dispositivo_resource = DispositivosResource(db)
 configuraciones_resource = ConfiguracionesResource(db)
+casas_resource = CasasResource(db)
+usuarios_resource = UsuariosResource(db)
 
 # Add routes to serve the resources
 app.add_route('/dispositivos', dispositivo_resource)
 app.add_route('/configuraciones', configuraciones_resource)
+app.add_route('/casas', casas_resource)
+app.add_route('/usuarios', usuarios_resource)
