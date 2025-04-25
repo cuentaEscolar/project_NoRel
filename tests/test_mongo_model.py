@@ -1,5 +1,8 @@
 from Conexion import mongo_model, mongo_gets, mongo_queries
 import pymongo 
+from bson.objectid import ObjectId
+
+#python -m tests.test_mongo_model
 
 class Test_mongo_model():
     def test_session_creation(self):
@@ -18,9 +21,9 @@ class Test_mongo_model():
         #for table in created_tables:
             #assert table.name in expected_tables
 
-#python -m tests.test_mongo_model
-client = mongo_model.get_session()
-##print(mongo_model.base_populate(client))
+
+# client = mongo_model.get_session()
+# print(mongo_model.base_populate(client))
 # json_resp_disp = mongo_gets.get_dispositivos()
 # json_resp_conf = mongo_gets.get_configuraciones()
 # json_resp_casas = mongo_gets.get_casas()
@@ -39,6 +42,72 @@ client = mongo_model.get_session()
 #     mongo_gets.print_x(user)
 
 ##PRUEBAS DE QUERIES
+#primero obtengo username
+username = "user_0" #input("Ingresa tu nombre de usuario: ")
+#obtner la casa del usuario
 #1
-# mongo_queries.get_usuario_info()
-id_casa = mongo_queries.get_id_casa(1)
+# get info del usuario
+#mongo_queries.get_usuario_info(username)
+
+#2 
+#primero obtengo la casa y su id
+num_casa = 1 #int(input("ingrese su número de casa: "))
+id_casa = mongo_queries.get_id_casa(num_casa)
+
+#2
+#get configuraciones activas on off de dispositivos tipo x 
+tipo = "lavadora" #input("Ingresa el tipo de dispositivo que quieres buscar")
+#mongo_queries.get_configuracion_horario(id_casa, tipo)
+
+#3
+#get dispositivos por tipo y estado
+#pregunto otra vez el tipo 
+#pregunto por el estado
+estado = "desactivo" #input("Ingresa el tipo de dispositivo que quieres buscar")
+#mongo_queries.get_dispositivo_por_tipo_estado(id_casa,tipo, estado)
+
+#4
+#todas las configuraciones de un dispositivo
+#pregundo por el id del dispositivo que lo pueden encontrar en el query anterior
+id_dispositivo = "680b0c22ec91d03ba0e1d65f" #input("Ingrese id del dispositivo: ")
+#mongo_queries.get_configuraciones_por_dispositivo(id_dispositivo)
+
+#5
+#buscar config por nombre
+#pido el nombre
+nombre_config = "noche" #input("Ingresa el nombre de la configuración: ")
+#mongo_queries.get_config_por_nombre(id_casa, nombre_config)
+
+#6
+#configuracion completa dada un id
+config_id = "680b0c22ec91d03ba0e1d660" #imput("Inserte id de configuración: ")
+#mongo_queries.get_configuracion_completa(config_id)
+
+#7
+#Configuraciones por fecha de modificación de un dispositivo.	
+
+
+
+
+#8
+#Configuraciones por hora on.	
+
+
+#9
+# Número de tipo dispositivos en una casa.	
+
+
+#10
+#Dispositivo por fecha de instalación.	
+
+
+
+#11
+# Configuraciones dado estado.	
+estado_config = "desactivo" #input("Ingresa estado de configuraciones a buscar: ")
+#mongo_queries.get_config_por_estado(id_casa, estado_config)
+
+#12
+#Dispositivos por nombre.	
+nombre_dispositivo = "Aire" #input("Ingresa el nombre del dispositivo: ")
+mongo_queries.get_dispositivo_por_nombre(id_casa, nombre_dispositivo)

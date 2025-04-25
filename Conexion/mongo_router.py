@@ -4,7 +4,7 @@ import logging
 
 from Conexion.mongo_model import get_database, get_session
 
-from Conexion.mongo_resources import DispositivosResource, ConfiguracionesResource, CasasResource, UsuariosResource
+from Conexion.mongo_resources import DispositivosResource, ConfiguracionesResource, CasasResource, UsuariosResource, DispositivosAgregacionResource, CasasAgregacionResource, ConfiguracionesAgregacionResource
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -29,8 +29,17 @@ configuraciones_resource = ConfiguracionesResource(db)
 casas_resource = CasasResource(db)
 usuarios_resource = UsuariosResource(db)
 
+#buscar dispositivos con agregaciones
+dispositivo_agregaciones_resource = DispositivosAgregacionResource(db)
+casas_agregaciones_resource = CasasAgregacionResource(db)
+configuraciones_agregaciones_resource = ConfiguracionesAgregacionResource(db)
 # Add routes to serve the resources
 app.add_route('/dispositivos', dispositivo_resource)
 app.add_route('/configuraciones', configuraciones_resource)
 app.add_route('/casas', casas_resource)
 app.add_route('/usuarios', usuarios_resource)
+
+#ruta para buscar dipsositivos con agregaciones
+app.add_route('/dispositivos/agregacion', dispositivo_agregaciones_resource)
+app.add_route('/casas/agregacion', casas_agregaciones_resource)
+app.add_route('/configuraciones/agregacion', configuraciones_agregaciones_resource)

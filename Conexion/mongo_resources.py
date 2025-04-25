@@ -1,5 +1,6 @@
 import falcon
 from bson.objectid import ObjectId
+import json
 
 
 class DispositivosResource:
@@ -46,7 +47,6 @@ class DispositivosResource:
         except Exception as e:
             resp.media = {"error": str(e)}
             print(f"Error en on_get: {e}")
-        
 
 class ConfiguracionesResource:
     def __init__(self, db):
@@ -158,3 +158,131 @@ class UsuariosResource:
         except Exception as e:
             resp.media = {"error": str(e)}
             print(f"Error en on_get: {e}")
+
+
+class DispositivosAgregacionResource:
+    def __init__(self, db):
+        self.db = db
+    async def on_get(self, req, resp):
+        try:
+            agg = req.get_param('agg')
+            if not agg:
+                resp.status = falcon.HTTP_400
+                resp.media = {"error": "Falta el parámetro con la agregación"}
+                return
+            try:
+                agg_pipeline = json.loads(agg)
+                convertir_id_a_ObjectId(agg_pipeline)
+            except json.JSONDecodeError as e:
+                resp.status = falcon.HTTP_400
+                resp.media = {"error": f"JSON inválido: {str(e)}"}
+                return
+
+            # Ejecutar la agregación
+            result = self.db.dispositivos.aggregate(agg_pipeline)
+            resultado_list = []
+
+            for doc in result:
+                # Convertir ObjectId a string
+                for key in doc:
+                    if isinstance(doc[key], ObjectId):
+                        doc[key] = str(doc[key])
+                resultado_list.append(doc)
+
+            resp.media = resultado_list
+            resp.status = falcon.HTTP_200
+        except Exception as e:
+            resp.status = falcon.HTTP_500
+            resp.media = {"error": str(e)}
+            print(f"Error en on_get_agregacion: {e}")
+
+
+class CasasAgregacionResource:
+    def __init__(self, db):
+        self.db = db
+    async def on_get(self, req, resp):
+        try:
+            agg = req.get_param('agg')
+            if not agg:
+                resp.status = falcon.HTTP_400
+                resp.media = {"error": "Falta el parámetro con la agregación"}
+                return
+            
+            try:
+                agg_pipeline = json.loads(agg)
+            except json.JSONDecodeError as e:
+                resp.status = falcon.HTTP_400
+                resp.media = {"error": f"JSON inválido: {str(e)}"}
+                return
+
+            # Ejecutar la agregación
+            result = self.db.casas.aggregate(agg_pipeline)
+            resultado_list = []
+
+            for doc in result:
+                # Convertir ObjectId a string
+                for key in doc:
+                    if isinstance(doc[key], ObjectId):
+                        doc[key] = str(doc[key])
+                resultado_list.append(doc)
+
+            resp.media = resultado_list
+            resp.status = falcon.HTTP_200
+        except Exception as e:
+            resp.status = falcon.HTTP_500
+            resp.media = {"error": str(e)}
+            print(f"Error en on_get_agregacion: {e}")
+
+
+class ConfiguracionesAgregacionResource:
+    def __init__(self, db):
+        self.db = db
+    async def on_get(self, req, resp):
+        try:
+            agg = req.get_param('agg')
+            if not agg:
+                resp.status = falcon.HTTP_400
+                resp.media = {"error": "Falta el parámetro con la agregación"}
+                return
+            try:
+                agg_pipeline = json.loads(agg)
+                convertir_id_a_ObjectId(agg_pipeline)
+            except json.JSONDecodeError as e:
+                resp.status = falcon.HTTP_400
+                resp.media = {"error": f"JSON inválido: {str(e)}"}
+                return
+
+            # Ejecutar la agregación
+            result = self.db.configuraciones.aggregate(agg_pipeline)
+            resultado_list = []
+
+            for doc in result:
+                # Convertir ObjectId a string
+                for key in doc:
+                    if isinstance(doc[key], ObjectId):
+                        doc[key] = str(doc[key])
+                resultado_list.append(doc)
+
+            resp.media = resultado_list
+            resp.status = falcon.HTTP_200
+        except Exception as e:
+            resp.status = falcon.HTTP_500
+            resp.media = {"error": str(e)}
+            print(f"Error en on_get_agregacion: {e}")
+
+#funcion para convertir el id string del pipeline a un tipo ObjectId
+def convertir_id_a_ObjectId(pipeline):
+    for etapa in pipeline:
+        if "$match" in etapa:
+            try:
+                if "_id" in etapa["$match"]:
+                    etapa["$match"]["_id"] = ObjectId(etapa["$match"]["_id"])
+                    
+                if "id_casa" in etapa["$match"]:
+                    etapa["$match"]["id_casa"] = ObjectId(etapa["$match"]["id_casa"])
+                
+                if "dispositivo_info.id_casa" in etapa["$match"]:
+                    etapa["$match"]["dispositivo_info.id_casa"] = ObjectId(etapa["$match"]["dispositivo_info.id_casa"])
+                    
+            except Exception as e:
+                print("No se pudo convertir id a ObjectId", e)
