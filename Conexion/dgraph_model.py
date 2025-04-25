@@ -51,6 +51,7 @@ def set_schema(client):
         operation = pydgraph.Operation(schema=schema)
         
         result = client.alter(operation)
+        print("Schema creado existosamente")
         return result
     except Exception as e:
         raise
