@@ -1,4 +1,6 @@
 import pydgraph
+import logging
+from Conexion.dgraph_model import set_schema
 
 class DgraphConnection:
     def __init__(self, host='localhost', port='9080'):
@@ -18,3 +20,20 @@ class DgraphConnection:
     def close(self):
         if self.client_stub:
             self.client_stub.close()
+
+    # static para poder llamarla sin llamar la clase primero
+    # esta función está aquí y no por fuera para mantener más limpieza en el código que llama todas las bases
+    @staticmethod
+    def initialize_dgraph():
+        try:
+            logging.info("Initializing Dgraph connection")
+            connection = DgraphConnection()
+            client = connection.connect()
+            
+            # Intentar establecer el schema
+            set_schema(client)
+            logging.info("Dgraph initialization successful")
+            return client
+        except Exception as e:
+            logging.error(f"Failed to initialize Dgraph: {e}")
+            raise
