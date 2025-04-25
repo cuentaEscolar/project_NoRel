@@ -42,8 +42,8 @@ def set_schema(client):
         ruta: string .
         nombre: string @index(exact) .
         tipo: string @index(hash) .
-        id_casa: int .
-        tiene_dispositivos: [uid] .
+        id_casa: int @index(int) .
+        tiene_dispositivos: [uid] @reverse .
         contiene_dispositivos: [uid] .
         agrupa_dispositivos: [uid] .
         """
