@@ -41,7 +41,7 @@ def generar_nombre_config(tipo):
         "aire_acondicionado": ["Modo Frío Intenso", "Ventilación Suave", "Modo Ahorro Energético", "Clima Tropical", "Calor Reconfortante", "Fresco", "Calido", "Clima por la mañana"]
     }
     nombre = random.choice(configuraciones.get(tipo, ["Configuración desconocida"]))
-    return {"nombre_config": nombre}
+    return nombre
 
 def generar_color_aleatorio():
     colores = ["blanco cálido", "blanco frío", "amarillo", "azul", "verde", "rojo", "morado", "naranja"]
@@ -144,23 +144,27 @@ def generar_configuraciones(tipo, dispositivo_id, configuraciones_collection, fe
     return configuraciones_for_dispCollection
 
 def crear_indices(db):
-    db.configuraciones.create_index([("nombre_configuracion", TEXT)])
+    db.configuraciones.create_index({"nombre_configuracion": "text"})
    
-    db.dispositivos.create_index([("nombre_dispositivo", TEXT)])
+    db.dispositivos.create_index({"nombre_dispositivo": "text"})
     
-    db.dispositivos.create_index([("tipo", ASCENDING)])
+    db.dispositivos.create_index({"tipo": 1})
   
-    db.casas.create_index([("num_casa", ASCENDING)])
+    db.casas.create_index({"num_casa": 1})
     
-    db.configuraciones.create_index([("estado_configuracion", ASCENDING)])
+    db.configuraciones.create_index({"estado_configuracion": 1})
     
-    db.dispositivos.create_index([("estado", ASCENDING)])
+    db.dispositivos.create_index({"estado": 1})
    
-    db.configuraciones.create_index([("fecha_ultima_modificacion", ASCENDING)])
+    db.configuraciones.create_index({"fecha_ultima_modificacion": 1})
     
-    db.dispositivos.create_index([("fecha_instalacion", ASCENDING)])
+    db.dispositivos.create_index({"fecha_instalacion": 1})
   
-    db.configuraciones.create_index([("hora_on", ASCENDING)])
+    db.configuraciones.create_index({"hora_on": 1})
+
+    db.dispositivos.create_index({ "id_casa": 1 })
+
+    db.configuraciones.create_index({ "id_dispositivo": 1 })
 
 def generador(usuarios_collection, casas_collection, dispositivos_collection, configuraciones_collection):
     usuarios = []

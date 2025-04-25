@@ -58,11 +58,45 @@ def get_usuarios(**parameters):
         print(f"Error: {response}")
         return
     
-def print_x(x):
-    for k in x.keys():
-        print(f"{k}: {x[k]}")
-    print("="*50)
+
 
 
 
 ##getter para dipsositivos, configuraciones, casas y usuarios dado una agregación
+def get_dispositivos_con_agregacion(agg):
+    suffix = "/dispositivos/agregacion"
+    endpoint = INTELLIGENT_HOUSE_API_URL + suffix
+    params={"agg": agg}
+    response = requests.get(endpoint, params=params)
+    if response.ok:
+        json_resp = response.json()
+        return json_resp
+    else:
+        print(f"Error: {response}")
+        return
+
+
+
+def get_casas_con_agregacion(agg):
+    suffix = "/casas/agregacion"
+    endpoint = INTELLIGENT_HOUSE_API_URL + suffix
+    params={"agg": agg}
+    response = requests.get(endpoint, params=params)
+    if response.ok:
+        json_resp = response.json()
+        return json_resp
+    else:
+        print(f"Error: {response}")
+        return
+    
+def get_configuraciones_con_agregacion(agg):
+    suffix = "/configuraciones/agregacion"
+    endpoint = INTELLIGENT_HOUSE_API_URL + suffix
+    params={"agg": agg}
+    response = requests.get(endpoint, params=params)
+    if response.ok:
+        json_resp = response.json()
+        return json_resp
+    else:
+        print(f"Error: {response}")
+        return
