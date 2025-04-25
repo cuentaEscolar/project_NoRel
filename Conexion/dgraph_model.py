@@ -31,17 +31,17 @@ def set_schema(client):
         }
 
         id_dispositivo: string @index(exact) .
-        categoria: string @index(exact) .
-        estado: string @index(exact) .
+        categoria: string @index(hash) .
+        estado: string @index(hash) .
         temperatura: string .
         modo: string @index(exact) .
-        ubicacion: string @index(exact) .
+        ubicacion: string @index(fulltext) .
         brillo: string .
         color: string @index(exact) .
         potencia: int .
         ruta: string .
         nombre: string @index(exact) .
-        tipo: string @index(exact) .
+        tipo: string @index(hash) .
         id_casa: int .
         tiene_dispositivos: [uid] .
         contiene_dispositivos: [uid] .
