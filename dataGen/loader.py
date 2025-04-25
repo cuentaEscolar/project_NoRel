@@ -1,5 +1,6 @@
 from Conexion import cassandra_model
 from Conexion import mongo_model
+from Conexion.dgraph_connection import DgraphConnection
 from dataGen import generator
 
 if __name__ == "__main__":
@@ -12,3 +13,5 @@ if __name__ == "__main__":
     #mongo_model.test_session(mongo_session)
     print(type(mongo_session))
 
+    # Inicializar Dgraph
+    dgraph_client = DgraphConnection.initialize_dgraph()
