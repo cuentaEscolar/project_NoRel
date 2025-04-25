@@ -182,17 +182,13 @@ def get_{}( account, d_s, d_e, {}):
     get_method_names = []
     for table_name in TABLE_NAMES:
         get_x = get_template.format(table_name,
-                                ",".join([x for x in SHORTENED_TABLE_PARAMETERS[table_name] if x != "d" ])
-                                ,  
-                                ",".join(FULL_PARAMETERS[table_name])
-                                ,
-                                f"{table_name}",
-                                " and " + " and ".join(
-                                list( map( lambda x : f"{x} = ?" , [ x for x in FULL_PARAMETERS[table_name] if x !="log_date"] ) )
-                                )
-                                ,
-
-                            ",".join([ x for x in SHORTENED_TABLE_PARAMETERS[table_name] if x !="log_date"]) + "a"
+            ",".join([x for x in SHORTENED_TABLE_PARAMETERS[table_name] if x != "d" ]) ,  
+            ",".join(FULL_PARAMETERS[table_name]) ,
+            f"{table_name}",
+            " and " + " and ".join(
+            list( map( lambda x : f"{x} = ?" , [ x for x in FULL_PARAMETERS[table_name] if x !="log_date"] ) )
+            ) ,
+            ",".join([ x for x in SHORTENED_TABLE_PARAMETERS[table_name] if x !="log_date"]) + "a"
                                     )
         #print(help(curry_session))
         #exec( call_template.format(table_name, ",".join( ["0"]* (2+len(SHORTENED_TABLE_PARAMETERS[table_name])) ) )  )
