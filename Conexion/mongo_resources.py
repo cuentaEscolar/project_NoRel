@@ -210,6 +210,7 @@ class CasasAgregacionResource:
             
             try:
                 agg_pipeline = json.loads(agg)
+                convertir_id_a_ObjectId(agg_pipeline)
             except json.JSONDecodeError as e:
                 resp.status = falcon.HTTP_400
                 resp.media = {"error": f"JSON inválido: {str(e)}"}
@@ -283,6 +284,13 @@ def convertir_id_a_ObjectId(pipeline):
                 
                 if "dispositivo_info.id_casa" in etapa["$match"]:
                     etapa["$match"]["dispositivo_info.id_casa"] = ObjectId(etapa["$match"]["dispositivo_info.id_casa"])
+                    
+                if "$and" in etapa["$match"]:
+                    for cond in etapa["$match"]["$and"]:
+                        if "id_casa" in cond:
+                            cond["id_casa"] = ObjectId(cond["id_casa"])
+                        if "_id" in cond:
+                            cond["_id"] = ObjectId(cond["_id"])
                     
             except Exception as e:
                 print("No se pudo convertir id a ObjectId", e)

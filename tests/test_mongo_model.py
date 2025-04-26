@@ -1,6 +1,5 @@
 from Conexion import mongo_model, mongo_gets, mongo_queries
 import pymongo 
-from bson.objectid import ObjectId
 
 #python -m tests.test_mongo_model
 
@@ -69,7 +68,7 @@ estado = "desactivo" #input("Ingresa el tipo de dispositivo que quieres buscar")
 #4
 #todas las configuraciones de un dispositivo
 #pregundo por el id del dispositivo que lo pueden encontrar en el query anterior
-id_dispositivo = "680b0c22ec91d03ba0e1d65f" #input("Ingrese id del dispositivo: ")
+id_dispositivo = "680bc4bdc1c5b2ec3f1a99b2" #input("Ingrese id del dispositivo: ")
 #mongo_queries.get_configuraciones_por_dispositivo(id_dispositivo)
 
 #5
@@ -80,27 +79,30 @@ nombre_config = "noche" #input("Ingresa el nombre de la configuración: ")
 
 #6
 #configuracion completa dada un id
-config_id = "680b0c22ec91d03ba0e1d660" #imput("Inserte id de configuración: ")
+config_id = "680bc4bdc1c5b2ec3f1a99b3" #imput("Inserte id de configuración: ")
 #mongo_queries.get_configuracion_completa(config_id)
 
 #7
 #Configuraciones por fecha de modificación de un dispositivo.	
-
-
+fecha_modificacion = '2024-10-18'
+#mongo_queries.get_config_por_fecha_modificacion(id_casa, fecha_modificacion)
 
 
 #8
 #Configuraciones por hora on.	
-
+hora_on = '16:19'
+#mongo_queries.get_config_por_hora_on(id_casa, hora_on)
 
 #9
 # Número de tipo dispositivos en una casa.	
+#vuelvo a preguntar el tipo
+#mongo_queries.get_cantidad_dispositivos_por_tipo(id_casa, "")
 
 
 #10
 #Dispositivo por fecha de instalación.	
-
-
+fecha_instalacion = '2023-03-05'
+mongo_queries.get_dispositivo_por_fecha_intalacion(id_casa, fecha_instalacion)
 
 #11
 # Configuraciones dado estado.	
@@ -109,5 +111,5 @@ estado_config = "desactivo" #input("Ingresa estado de configuraciones a buscar: 
 
 #12
 #Dispositivos por nombre.	
-nombre_dispositivo = "Aire" #input("Ingresa el nombre del dispositivo: ")
-mongo_queries.get_dispositivo_por_nombre(id_casa, nombre_dispositivo)
+nombre_dispositivo = "Aire 1" #input("Ingresa el nombre del dispositivo: ")
+#mongo_queries.get_dispositivo_por_nombre(id_casa, nombre_dispositivo)

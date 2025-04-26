@@ -70,7 +70,7 @@ def generar_dispositivos(casa_id, dispositivos_collection, configuraciones_colle
     for tipo, cantidad in num_dispositivos.items():
         for i in range(cantidad):
             dispositivo_id = ObjectId()
-            nombre = f"{tipo.capitalize()}-{i}"
+            nombre = f"{tipo.replace('_', ' ').capitalize()} {i}"
             fecha_instalacion = generar_fecha("2020-01-01", fecha_actual)
             configuraciones = (generar_configuraciones(tipo, dispositivo_id, configuraciones_collection, fecha_instalacion))
             dispositivos.append({
