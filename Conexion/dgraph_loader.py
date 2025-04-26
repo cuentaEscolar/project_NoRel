@@ -1,4 +1,4 @@
-from dgraph_connection import DgraphConnection
+from Conexion.dgraph_connection import DgraphConnection
 import csv
 import os
 import logging

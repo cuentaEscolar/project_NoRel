@@ -31,19 +31,19 @@ def set_schema(client):
         }
 
         id_dispositivo: string @index(exact) .
-        categoria: string @index(exact) .
-        estado: string @index(exact) .
+        categoria: string @index(hash) .
+        estado: string @index(hash) .
         temperatura: string .
         modo: string @index(exact) .
-        ubicacion: string @index(exact) .
+        ubicacion: string @index(fulltext) .
         brillo: string .
         color: string @index(exact) .
         potencia: int .
         ruta: string .
         nombre: string @index(exact) .
-        tipo: string @index(exact) .
-        id_casa: int .
-        tiene_dispositivos: [uid] .
+        tipo: string @index(hash) .
+        id_casa: int @index(int) .
+        tiene_dispositivos: [uid] @reverse .
         contiene_dispositivos: [uid] .
         agrupa_dispositivos: [uid] .
         """
@@ -51,6 +51,7 @@ def set_schema(client):
         operation = pydgraph.Operation(schema=schema)
         
         result = client.alter(operation)
+        print("Schema creado existosamente")
         return result
     except Exception as e:
         raise

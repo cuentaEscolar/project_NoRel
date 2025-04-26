@@ -365,10 +365,8 @@ def generar_datos_cassandra():
     with open("cassandra_logs.csv", "w", newline="", encoding="utf-8") as f:
 
         writer = csv.writer(f)
-        writer.writerow([
-            "account", "device_type", "log_date", "device", 
-            "unit", "value", "comment"
-        ])
+        writer.writerow([ "account", "device_type", "log_date", "device", 
+            "unit", "value", "comment" ])
         emit_cassandra_data_from_csv("mongodb_dispositivos.csv", writer.writerow)
     print("Datos para Cassandra generados correctamente.")
     

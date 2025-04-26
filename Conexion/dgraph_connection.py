@@ -30,7 +30,7 @@ class DgraphConnection:
             connection = DgraphConnection()
             client = connection.connect()
             
-            # Intentar establecer el schema
+            # Establecer el schema
             set_schema(client)
             logging.info("Dgraph initialization successful")
             return client
