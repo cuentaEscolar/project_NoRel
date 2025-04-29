@@ -397,6 +397,4 @@ def get_dispositivo_por_nombre(id_casa, nombre_dispositivo):
     print_data(data)
     
 
-#FALTA 8,10
-##CAMBIAR 2 Y DOS PARA QUE SEA OPCIONAL PONER EL TIPO Y ESTADO Y SI NO LO PONEN TE REGRESA TODOS LOS DISPOSITIVOS O CONFIGURAICONES DE ESAS CASA
 
