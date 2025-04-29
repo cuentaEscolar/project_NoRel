@@ -2,17 +2,22 @@ import Conexion.mongo_gets
 import json
 
 
-def print_x(x):
+def print_dict(x):
     for k in x.keys():
         print(f"{k}: {x[k]}")
     print("="*50)
-#funcion para imprimir los resultados
+
 def print_data(data): 
     if not data:
         print("No se recibieron datos.")
     else:
         for item in data:
-            print_x(item)
+            print_dict(item)
+
+def ejecutar_agregacion(pipeline, getter_func):
+    agg = json.dumps(pipeline)
+    data = getter_func(agg)
+    print_data(data)
 
 #funcion para obtener el id de la casa 
 # evitar hacer las agregaciones desde la coleccion de casas siempre
@@ -62,9 +67,7 @@ def get_configuracion_horario(id_casa, tipo):
             }
         }
     ]
-    agg = json.dumps(agg_pipeline)
-    data = Conexion.mongo_gets.get_dispositivos_con_agregacion(agg)
-    print_data(data)
+    ejecutar_agregacion(agg_pipeline, Conexion.mongo_gets.get_dispositivos_con_agregacion)
     
 #3.Dispositivos por casas.	
 # El usuario puede ver la lista de dispositivos que tiene en su casa y si están activos o no. 
@@ -88,9 +91,7 @@ def get_dispositivo_por_tipo_estado(id_casa, tipo, estado):
         }
     }
     ]
-    agg = json.dumps(agg_pipeline, default=str)
-    data = Conexion.mongo_gets.get_dispositivos_con_agregacion(agg)
-    print_data(data)
+    ejecutar_agregacion(agg_pipeline, Conexion.mongo_gets.get_dispositivos_con_agregacion)
     
 #4.Configuraciones por dispositivo.	
 #El usuario puede ver todas las configuraciones de un dispositivo en específico 
@@ -121,9 +122,7 @@ def get_configuraciones_por_dispositivo(id_dispositivo):
             }
         }
     ]
-    agg = json.dumps(agg_pipeline)
-    data = Conexion.mongo_gets.get_dispositivos_con_agregacion(agg)
-    print_data(data)
+    ejecutar_agregacion(agg_pipeline, Conexion.mongo_gets.get_dispositivos_con_agregacion)
 
 #5.Configuraciones por nombre.	
 # El usuario puede ver las configuraciones con nombre que contengan un texto especifico. 	
@@ -160,9 +159,7 @@ def get_config_por_nombre(id_casa, nombre_config):
             }
         }
     ]
-    agg = json.dumps(agg_pipeline)
-    data = Conexion.mongo_gets.get_configuraciones_con_agregacion(agg)
-    print_data(data)
+    ejecutar_agregacion(agg_pipeline, Conexion.mongo_gets.get_configuraciones_con_agregacion)
 
 #6.Configuración completa dado un id.	
 # El usuario puede ver la configuración completa de un dispositivo dado su id_configuracion.	
@@ -212,10 +209,7 @@ def get_config_por_fecha_modificacion(id_casa, fecha_modificacion):
             }
         }
     ]
-
-    agg = json.dumps(agg_pipeline)
-    data = Conexion.mongo_gets.get_dispositivos_con_agregacion(agg)
-    print_data(data)
+    ejecutar_agregacion(agg_pipeline, Conexion.mongo_gets.get_dispositivos_con_agregacion)
 
 #8.Configuraciones por hora de encendido.	
 # El usuario puede ver las configuraciones dada una hora_on ('16:19'). 	
@@ -259,10 +253,7 @@ def get_config_por_hora_on(id_casa, hora_on):
             }
         }
     ]
-
-    agg = json.dumps(agg_pipeline)
-    data = Conexion.mongo_gets.get_dispositivos_con_agregacion(agg)
-    print_data(data)
+    ejecutar_agregacion(agg_pipeline, Conexion.mongo_gets.get_dispositivos_con_agregacion)
 
 #9.Número de tipo dispositivos en una casa.	
 # El usuario puede ver cuántos tipos de dispositivo tienen en su casa. 
@@ -280,7 +271,7 @@ def get_cantidad_dispositivos_por_tipo(id_casa, tipo):
                 "cantidad": { "$size": { "$ifNull": [ f"$dispositivos.{tipo}", [] ] } }
             }
         }
-        pipeline = [match_etapa, project_etapa]
+        agg_pipeline = [match_etapa, project_etapa]
     else:
         project_etapa = {
             "$project": {
@@ -294,11 +285,8 @@ def get_cantidad_dispositivos_por_tipo(id_casa, tipo):
                 "aire_acondicionado": { "$size": { "$ifNull": ["$dispositivos.aire_acondicionado", []] } }
             }
         }
-        pipeline = [match_etapa, project_etapa]
-
-    agg = json.dumps(pipeline)
-    data = Conexion.mongo_gets.get_casas_con_agregacion(agg)
-    print_data(data)
+        agg_pipeline = [match_etapa, project_etapa]
+    ejecutar_agregacion(agg_pipeline, Conexion.mongo_gets.get_casas_con_agregacion)
 
 #10.Dispositivo por fecha de instalación.	
 # El usuario puede ver los dispositivos en orden ascendente dada una fecha_instalacion. 	
@@ -330,10 +318,7 @@ def get_dispositivo_por_fecha_intalacion(id_casa, fecha_instalacion):
             }
         }
     ]
-
-    agg = json.dumps(agg_pipeline)
-    data = Conexion.mongo_gets.get_dispositivos_con_agregacion(agg)
-    print_data(data)
+    ejecutar_agregacion(agg_pipeline, Conexion.mongo_gets.get_dispositivos_con_agregacion)
 
 #11. Configuraciones dado estado.	
 # El usuario puede ver sus configuraciones activas o desactivas. 
@@ -365,10 +350,7 @@ def get_config_por_estado(id_casa, estado_config):
             }
         }
     ]
-    agg = json.dumps(agg_pipeline)
-    data = Conexion.mongo_gets.get_dispositivos_con_agregacion(agg)
-    print_data(data)
-
+    ejecutar_agregacion(agg_pipeline, Conexion.mongo_gets.get_dispositivos_con_agregacion)
 
 #12. Dispositivos por nombre.	
 # El usuario puede ver las configuraciones con nombre que contengan un texto especifico. 	
@@ -392,9 +374,7 @@ def get_dispositivo_por_nombre(id_casa, nombre_dispositivo):
             }
         }
     ]
-    agg = json.dumps(agg_pipeline)
-    data = Conexion.mongo_gets.get_dispositivos_con_agregacion(agg)
-    print_data(data)
+    ejecutar_agregacion(agg_pipeline, Conexion.mongo_gets.get_dispositivos_con_agregacion)
     
 
 
