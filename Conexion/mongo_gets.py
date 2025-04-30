@@ -4,10 +4,11 @@ import os
 #ENDPOINT
 INTELLIGENT_HOUSE_API_URL = os.getenv("INTELLIGENT_HOUSE_API_URL", "http://localhost:8001")
 
-##getter para dipsositivos, configuraciones, casas y usuarios dado un parametro (no agregación) 
-
-def get_dispositivos(**parameters):
-    suffix = "/dispositivos"
+##getter para dipsositivos, configuraciones, casas y usuarios dado parametros o agregación 
+#suff para get con parametros: "/dispositivos", "/configuraciones", "/casas", "/usuarios"
+#suff para agregacion: "/dispositivos/agregacion", "/casas/agregacion", "/configuraciones/agregacion"
+def get_x(suff,**parameters):
+    suffix = suff
     endpoint = INTELLIGENT_HOUSE_API_URL + suffix
     params = {key: value for key, value in parameters.items() if value is not None}
 
@@ -19,84 +20,3 @@ def get_dispositivos(**parameters):
         print(f"Error: {response}")
         return
 
-def get_configuraciones(**parameters):
-    suffix = "/configuraciones"
-    endpoint = INTELLIGENT_HOUSE_API_URL + suffix
-    params = {key: value for key, value in parameters.items() if value is not None}
-
-    response = requests.get(endpoint, params=params)
-    if response.ok:
-        json_resp = response.json()
-        return json_resp
-    else:
-        print(f"Error: {response}")
-        return
-    
-def get_casas(**parameters):
-    suffix = "/casas"
-    endpoint = INTELLIGENT_HOUSE_API_URL + suffix
-    params = {key: value for key, value in parameters.items() if value is not None}
-
-    response = requests.get(endpoint, params=params)
-    if response.ok:
-        json_resp = response.json()
-        return json_resp
-    else:
-        print(f"Error: {response}")
-        return
-
-def get_usuarios(**parameters):
-    suffix = "/usuarios"
-    endpoint = INTELLIGENT_HOUSE_API_URL + suffix
-    params = {key: value for key, value in parameters.items() if value is not None}
-
-    response = requests.get(endpoint, params=params)
-    if response.ok:
-        json_resp = response.json()
-        return json_resp
-    else:
-        print(f"Error: {response}")
-        return
-    
-
-
-
-
-##getter para dipsositivos, configuraciones, casas y usuarios dado una agregación
-def get_dispositivos_con_agregacion(agg):
-    suffix = "/dispositivos/agregacion"
-    endpoint = INTELLIGENT_HOUSE_API_URL + suffix
-    params={"agg": agg}
-    response = requests.get(endpoint, params=params)
-    if response.ok:
-        json_resp = response.json()
-        return json_resp
-    else:
-        print(f"Error: {response}")
-        return
-
-
-
-def get_casas_con_agregacion(agg):
-    suffix = "/casas/agregacion"
-    endpoint = INTELLIGENT_HOUSE_API_URL + suffix
-    params={"agg": agg}
-    response = requests.get(endpoint, params=params)
-    if response.ok:
-        json_resp = response.json()
-        return json_resp
-    else:
-        print(f"Error: {response}")
-        return
-    
-def get_configuraciones_con_agregacion(agg):
-    suffix = "/configuraciones/agregacion"
-    endpoint = INTELLIGENT_HOUSE_API_URL + suffix
-    params={"agg": agg}
-    response = requests.get(endpoint, params=params)
-    if response.ok:
-        json_resp = response.json()
-        return json_resp
-    else:
-        print(f"Error: {response}")
-        return

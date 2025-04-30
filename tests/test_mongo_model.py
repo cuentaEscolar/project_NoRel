@@ -54,7 +54,7 @@ num_casa = 1 #int(input("ingrese su número de casa: "))
 id_casa = mongo_queries.get_id_casa(num_casa)
 
 #2
-#get configuraciones activas on off de dispositivos tipo x 
+#get configuraciones on off de dispositivos tipo x 
 tipo = "lavadora" #input("Ingresa el tipo de dispositivo que quieres buscar")
 #mongo_queries.get_configuracion_horario(id_casa, tipo)
 
@@ -62,7 +62,7 @@ tipo = "lavadora" #input("Ingresa el tipo de dispositivo que quieres buscar")
 #get dispositivos por tipo y estado
 #pregunto otra vez el tipo 
 #pregunto por el estado
-estado = "desactivo" #input("Ingresa el tipo de dispositivo que quieres buscar")
+estado = "activo" #input("Ingresa el tipo de dispositivo que quieres buscar")
 #mongo_queries.get_dispositivo_por_tipo_estado(id_casa,tipo, estado)
 
 #4
@@ -101,8 +101,8 @@ hora_on = '16:19'
 
 #10
 #Dispositivo por fecha de instalación.	
-fecha_instalacion = '2023-03-05'
-mongo_queries.get_dispositivo_por_fecha_intalacion(id_casa, fecha_instalacion)
+fecha_instalacion = '2024-03-05'
+#mongo_queries.get_dispositivo_por_fecha_intalacion(id_casa, fecha_instalacion)
 
 #11
 # Configuraciones dado estado.	
