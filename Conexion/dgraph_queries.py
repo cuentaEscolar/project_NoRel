@@ -265,18 +265,21 @@ def dispositivos_por_habitacion(client, casa_id, habitacion):
 def dispositivos_sincronizados(client, casa_id):
     """
     Los usuarios deben poder filtrar los dispositivos que están sincronizados entre sí.
-    Retorna los dispositivos que están en el mismo cluster funcional.
+    Retorna los dispositivos sincronizados y sus conexiones
     """
     query = """query dispositivos_sincronizados($casa_id: string) {
         casa(func: eq(id_casa, $casa_id)) {
-            clusters: ~contiene_dispositivos @filter(eq(tipo, "cluster") AND eq(categoria, "funcional")) {
-                nombre
-                dispositivos: tiene_dispositivos {
+            tiene_dispositivos @filter(has(sincroniza_con)) {
+                id_dispositivo
+                categoria
+                estado
+                ubicacion
+                # Obtenemos los dispositivos con los que está sincronizado
+                dispositivos_sincronizados: sincroniza_con {
                     id_dispositivo
                     categoria
                     estado
                     ubicacion
-                    modo
                 }
             }
         }
@@ -290,17 +293,26 @@ def dispositivos_sincronizados(client, casa_id):
 def dispositivos_cluster_funcional(client, casa_id, tipo_funcional):
     """
     Los usuarios deben poder filtrar los dispositivos que están en el mismo cluster funcional (iluminación, climatización, etc).
+    Regresa los clusters del tipo especificado y sus dispositivos
     """
     query = """query dispositivos_cluster($casa_id: string, $tipo: string) {
         casa(func: eq(id_casa, $casa_id)) {
-            clusters: ~contiene_dispositivos @filter(eq(categoria, "funcional") AND eq(nombre, $tipo)) {
-                nombre
-                dispositivos: tiene_dispositivos {
-                    id_dispositivo
+            tiene_dispositivos {
+                id_dispositivo
+                categoria
+                estado
+                ubicacion
+                ~contiene_dispositivos @filter(eq(tipo, $tipo)) {
+                    tipo
                     categoria
-                    estado
-                    ubicacion
-                    modo
+                    nombre
+                    # Obtenemos todos los dispositivos del mismo cluster
+                    contiene_dispositivos {
+                        id_dispositivo
+                        categoria
+                        estado
+                        ubicacion
+                    }
                 }
             }
         }
