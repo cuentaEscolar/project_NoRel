@@ -14,6 +14,7 @@ def set_schema(client):
             color
             potencia
             ruta
+            sincroniza_con: [Device]
         }
 
         type Casa {
@@ -43,15 +44,16 @@ def set_schema(client):
         nombre: string @index(exact) .
         tipo: string @index(hash) .
         id_casa: int @index(int) .
+        sincroniza_con: [uid] @reverse .
         tiene_dispositivos: [uid] @reverse .
-        contiene_dispositivos: [uid] .
-        agrupa_dispositivos: [uid] .
+        contiene_dispositivos: [uid] @reverse .
+        agrupa_dispositivos: [uid] @reverse .
         """
         
         operation = pydgraph.Operation(schema=schema)
         
         result = client.alter(operation)
-        print("Schema creado existosamente")
+        print("Schema creado exitosamente")
         return result
     except Exception as e:
         raise

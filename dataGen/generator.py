@@ -26,9 +26,6 @@ FECHA_INICIAL = datetime.now() - timedelta(days=30)
 # La fecha final es ahora mismo
 FECHA_FINAL = datetime.now()
 
-# Crear directorio para los archivos CSV
-# os.makedirs("datos_iot", exist_ok=True)
-
 # Genera un timestamp aleatorio entre dos fechas
 def generar_timestamp_aleatorio(inicio=FECHA_INICIAL, fin=FECHA_FINAL):
     delta = fin - inicio
@@ -212,7 +209,7 @@ def generar_datos_dgraph():
     - casas.csv: Datos básicos de las casas
     - dispositivos.csv: Información de todos los dispositivos
     - clusters.csv: Información de los clusters
-    - relaciones.csv: Conexiones entre nodos (casa-dispositivo, cluster-dispositivo)
+    - relaciones.csv: Conexiones entre nodos (casa-dispositivo, cluster-dispositivo, dispositivo-dispositivo)
     """
     
     # Crear archivos CSV con sus encabezados
@@ -240,6 +237,13 @@ def generar_datos_dgraph():
             reader = csv.DictReader(f_mongo_disp)
             for row in reader:
                 dispositivos.append((row["id_dispositivo"], row["tipo_dispositivo"], row["id_casa"]))
+        
+        # Crear diccionario para agrupar dispositivos por tipo
+        dispositivos_por_tipo = {}
+        for id_disp, tipo_disp, casa_id in dispositivos:
+            if tipo_disp not in dispositivos_por_tipo:
+                dispositivos_por_tipo[tipo_disp] = []
+            dispositivos_por_tipo[tipo_disp].append((id_disp, casa_id))
         
         # Generar datos para cada casa
         for casa_id in range(1, NUM_CASAS + 1):
@@ -295,9 +299,25 @@ def generar_datos_dgraph():
                             (tipo == "seguridad" and tipo_disp == "cerradura")):
                             if random.random() > 0.3:  # 70% probabilidad de asignación
                                 writer_rel.writerow([cluster_id, "agrupa_dispositivos", id_disp])
+        
+        # Generar relaciones de sincronización entre dispositivos del mismo tipo
+        for tipo_disp, lista_dispositivos in dispositivos_por_tipo.items():
+            # Para cada dispositivo, elegir aleatoriamente otros dispositivos del mismo tipo para sincronizar
+            for id_disp, casa_id in lista_dispositivos:
+                # Filtrar dispositivos que no sean el actual y estén en otras casas
+                otros_dispositivos = [(d_id, c_id) for d_id, c_id in lista_dispositivos 
+                                    if d_id != id_disp and c_id != casa_id]
+                
+                if otros_dispositivos:  # Si hay otros dispositivos disponibles
+                    # Elegir un número aleatorio de dispositivos para sincronizar (1 a 3)
+                    num_sincronizaciones = random.randint(1, min(3, len(otros_dispositivos)))
+                    dispositivos_sincronizar = random.sample(otros_dispositivos, num_sincronizaciones)
+                    
+                    # Crear las relaciones de sincronización
+                    for disp_sync, _ in dispositivos_sincronizar:
+                        writer_rel.writerow([id_disp, "sincroniza_con", disp_sync])
     
     print("Datos para Dgraph generados correctamente en formato CSV.")
-
 
 def load_csv_devices(file):
     dispositivos = []

@@ -98,8 +98,8 @@ def load_clusters(client, file_path):
 
 def create_relations(client, file_path, uids_map):
     """
-    Crea las relaciones entre nodos usando el archivo de relaciones
-    y el mapeo de UIDs obtenido al crear los nodos
+    Crea las relaciones entre nodos usando el archivo de relaciones y el mapeo de los UIDs obtenidos al crear los nodos.
+    Retorna: Nada 
     """
     txn = client.txn()
     try:
@@ -110,6 +110,7 @@ def create_relations(client, file_path, uids_map):
                 destino_id = row['destino_id']
                 tipo_relacion = row['tipo_relacion']
                 
+                # Verificar que ambos nodos existen en el mapa de UIDs
                 if origen_id in uids_map and destino_id in uids_map:
                     mutation = {
                         'uid': uids_map[origen_id],
@@ -130,6 +131,7 @@ def load_data_to_dgraph(base_path, connection=None):
         base_path: Ruta base donde se encuentran los archivos CSV
         connection: Conexión opcional a DGraph
     """
+    # Si el usuario no proporciona una conexión, nos hacemos una nueva
     if connection is None:
         connection = DgraphConnection()
     
