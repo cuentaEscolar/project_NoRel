@@ -3,7 +3,7 @@
 # De esta manera, los archivos se guardarán en el directorio donde está este código
 # Si se hace click en el botón de ejecutar de VSCode, los archivos se guardarán en el directorio raíz de VSCode
 # Y tendrán que ser copiados a la carpeta correcta
-
+#python -m dataGen.generator
 import csv
 # Generamos muchos datos aleatorios, esto es muy necesario para el proyecto
 import random
@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 from cassandra.util import uuid_from_time
 from Conexion.printing_cassandra_utils import coerce_to_string
 from Conexion.mongo_gets import get_x
+from Conexion.mongo_model import base_populate, get_session
 from uuid import UUID
 
 import os
@@ -86,10 +87,25 @@ def generar_locacion_aleatoria():
     locaciones.extend(["habitación de invitados", "sala principal", "habitación principal", "cocina", "oficina"])
     return random.choice(locaciones)
 
-#regresa los datos en json generados en mongo_script
 def generar_datos_mongodb():
-   #regresa en json los dispositivos en la base de datos 
-   return get_x("/dispsitivos", )
+   #1) generar session con get_session
+   session = get_session()
+   #2) poblar base de datos de mongo con base_populate
+   base_populate(session)
+   #3) llamar a get_x con sufijo a dispsoitivos. Regresa json de todos los dispositivos en base de datos
+   dispositivos = get_x("/dispositivos", )
+   #4) crear un mongo_dispositivos.csv con campos: id_dispositivo, "tipo_dispositivo, "id_casa)
+   with open("mongo_dispositivos.csv", mode="w", newline="", encoding="utf-8") as file:
+        writer = csv.writer(file)
+        writer.writerow(["id_dispositivo", "tipo_dispositivo", "id_casa"])
+        for dispositivo in dispositivos:
+            writer.writerow([
+                dispositivo.get("_id"),
+                dispositivo.get("tipo"),
+                dispositivo.get("id_casa")
+            ])
+    
+   
 
 # Generación de datos para Dgraph (relaciones entre dispositivos)
 def generar_datos_dgraph():
@@ -226,7 +242,6 @@ def gen_random_timestamp(current_date):
 # Generación de datos para Cassandra (datos de sensores en tiempo real)
 #
 def cassandra_log(timestamp, device):
-
     functions_per_unit = {
         "celsius" : generar_temperatura_aleatoria,
         "kWh" : generar_consumo_energia_aleatorio ,

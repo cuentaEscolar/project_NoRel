@@ -4,7 +4,7 @@ from bson import ObjectId
 
 from pymongo import ASCENDING, TEXT
 
-NUM_USUARIOS = 1
+NUM_USUARIOS = 200
 
 def generar_hora():
     hora = random.randint(0, 23)

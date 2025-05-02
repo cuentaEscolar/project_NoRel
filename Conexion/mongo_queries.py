@@ -24,14 +24,27 @@ def get_id_casa(casa):
     for casa in data:
         return casa["_id"]
 
+#funcion para hacer el match segun que datos se den para la busqueda
+def gen_state_match(id, tipo, estado):
+    if id != None:
+        #agregar al match
+        ...
+    if tipo != None:
+        #agregar al match
+        ...
+    if estado != None:
+        #agregar al match
+        ...
+
+
 #1.Info del usuario 	
 def get_usuario_info(usuario):
     data = Conexion.mongo_gets.get_x("/usuarios",username = usuario)
     for user in data:
         print_dict(user)
 
-#2.Configuraciones on/off de un tipo de dispositivo
-def get_configuracion_horario(id_casa, tipo):
+#2.Configuraciones de un tipo de dispositivo #TIPO DEBE SER OPCIONAL #QUE ME DE TODOS LOS DATOS
+def get_configuracion_por_tipo(id_casa, tipo):
     agg_pipeline = [
         {
            "$match": {
@@ -50,8 +63,10 @@ def get_configuracion_horario(id_casa, tipo):
         {
             "$project": {
                 "_id": 0,
-                "nombre_dispositivo": 1,                     
+                "nombre_dispositivo": 1,    
+                "id_configuracion": "$configuraciones_info._id",              
                 "nombre_configuracion": "$configuraciones_info.nombre_configuracion",
+                "estado_configuracion": "$configuraciones_info.estado_configuracion",
                 "hora_on": "$configuraciones_info.hora_on",
                 "hora_off": "$configuraciones_info.hora_off",
                 "hora_autolimpieza": "$configuraciones_info.config_especial.hora_autolimpieza"
@@ -60,7 +75,7 @@ def get_configuracion_horario(id_casa, tipo):
     ]
     ejecutar_agregacion(agg_pipeline, "/dispositivos/agregacion")
     
-#3.Dispositivos por casas y tipo.	
+#3.Dispositivos por casas y tipo.	#TIPO Y ESTADO DEBE SER OPCIONAL
 def get_dispositivo_por_tipo_estado(id_casa, tipo, estado):
     agg_pipeline = [
     {
@@ -73,7 +88,8 @@ def get_dispositivo_por_tipo_estado(id_casa, tipo, estado):
     {
         "$project": {
             "_id": 1,
-            "nombre_dispositivo": 1,                     
+            "nombre_dispositivo": 1,   
+            "modelo": 1,                  
             "tipo": 1,
             "estado": 1
         }
@@ -232,7 +248,7 @@ def get_config_por_hora_on(id_casa, hora_on):
     ]
     ejecutar_agregacion(agg_pipeline, "/dispositivos/agregacion")
 
-#9.Número de tipo dispositivos en una casa.	
+#9.Número de tipo dispositivos en una casa.	#TIPO YA ES OPCIONAL
 def get_cantidad_dispositivos_por_tipo(id_casa, tipo):
     match_etapa = { "$match": { "_id": id_casa } }
 
