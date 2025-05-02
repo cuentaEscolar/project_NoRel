@@ -12,6 +12,7 @@ import random
 from datetime import datetime, timedelta
 from cassandra.util import uuid_from_time
 from Conexion.printing_cassandra_utils import coerce_to_string
+from Conexion.mongo_gets import get_x
 from uuid import UUID
 
 import os
@@ -85,122 +86,10 @@ def generar_locacion_aleatoria():
     locaciones.extend(["habitación de invitados", "sala principal", "habitación principal", "cocina", "oficina"])
     return random.choice(locaciones)
 
-# Generación de datos para MongoDB (configuración y metadata)
+#regresa los datos en json generados en mongo_script
 def generar_datos_mongodb():
-    # Archivo para dispositivos
-    with open("mongodb_dispositivos.csv", "w", newline="", encoding="utf-8") as f: # Importante el utf-8 o todo se va al carajo
-        writer = csv.writer(f)
-        # Crear columnas
-        writer.writerow(["id_dispositivo", "id_casa", "tipo_dispositivo", "modelo",
-                         "fecha_instalacion", "activo"])
-        
-        # Generar datos de cada casa
-        for casa in range(1, NUM_CASAS + 1):
-            num_dispositivos = { # Número distinto para cada dispositivo
-                "aire_acondicionado": random.randint(1, 3),
-                "bombilla": random.randint(5, 15),
-                "cerradura": random.randint(1, 4),
-                "aspiradora": random.randint(0, 2),
-                "refrigerador": random.randint(1, 2)
-            }
-            
-            # Para cada tipo de dispositivo se generan los datos
-            for tipo, cantidad in num_dispositivos.items():
-
-                # Cicla entre los dispositivos de un tipo
-                for i in range(cantidad):
-                    # Asignar id
-                    id_dispositivo = str(uuid.uuid4())
-                    # Se inventa un modelo con un número aleatorio, porque poner los modelos reales sería demasiado complicado
-                    modelo = f"Modelo-{random.randint(100, 999)}"
-
-                    # Generar fecha de instalación al azar
-                    fecha_instalacion = generar_timestamp_aleatorio(
-                        FECHA_INICIAL - timedelta(days=365*2),  # 2 años antes de la fecha actual
-                        FECHA_INICIAL
-                    ).strftime("%Y-%m-%d") # Formato de fecha   
-
-                    # Generar estado activo o inactivo donde weights hace que el 95% sean True y el 5% sean False
-                    activo = random.choices([True, False], weights=[0.95, 0.05])[0] # [0] para que el resultadosea un booleano
-                    
-                    # Escribir los datos en el archivo CSV en una fila
-                    writer.writerow([
-                        id_dispositivo, casa, tipo, modelo, 
-                        fecha_instalacion, activo
-                    ]) 
-
-    # Archivo para configuraciones de dispositivos
-    with open("mongodb_configuraciones.csv", "w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        # Crear columnas
-        writer.writerow(["id_configuracion", "id_dispositivo", "nombre_configuracion", 
-                          "programacion_activa", "hora_encendido", "hora_apagado", 
-                          "configuracion_especial", "ultima_modificacion"])
-        
-        # Leer IDs de los dispositivos ya generados
-        dispositivos = []
-        with open("mongodb_dispositivos.csv", "r", newline="", encoding="utf-8") as f_disp:
-            reader = csv.DictReader(f_disp)
-            # Añadir los dispositivos a una lista con append
-            for row in reader:
-                dispositivos.append((row["id_dispositivo"], row["tipo_dispositivo"], row["id_casa"]))
-        
-        # Cicla entre los dispositivos
-        for id_dispositivo, tipo_dispositivo, id_casa in dispositivos:
-            # Número de configuraciones random entre 1 y 3
-            num_configuraciones = random.randint(1, 3)
-
-            # Cicla entre las configuraciones generadas arriba
-            for i in range(num_configuraciones):
-                # Se crea el ID de la configuración
-                id_configuracion = str(uuid.uuid4())
-                # Se inventa un nombre para la configuración que es config + número
-                nombre = f"Config_{i+1}"
-                # Elegir si está activo o no
-                programacion_activa = random.choice([True, False])
-                # Generar hora de encendido al azar
-                hora_encendido = generar_hora_aleatoria()
-                # Generar hora de apagado al azar
-                hora_apagado = generar_hora_aleatoria()
-                
-                # Generar una configuración especial para el dispositivo
-                config_especial = "" # Se inicializa con una string vacía
-
-                # Dependiendo del dispositivo, se genera una configuración especial
-
-                if tipo_dispositivo == "aire_acondicionado":
-                    # Genera una temperatura aleatoria con la función que genera entre 16 y 30 grados
-                    temperatura = f"{generar_temperatura_aleatoria()}°C"
-                    # Determina si el modo es auto o manual con un 50% de probabilidad
-                    modo = 'auto' if random.random() > 0.5 else 'manual'
-                    # Generarl locacion aleatoria
-                    ubicacion = generar_locacion_aleatoria()
-                    config_especial = f"temperatura:{temperatura},modo:{modo},ubicacion:{ubicacion}"
-
-                elif tipo_dispositivo == "bombilla":
-                    # Genera un brillo aleatorio entre 10 y 100 y crea un color aleatorio
-                    config_especial = f"brillo:{random.randint(10, 100)}%,color:{generar_color_aleatorio()}"
-
-                elif tipo_dispositivo == "aspiradora":
-                    # Genera una potencia aleatoria entre 1 y 3 y crea una ruta aleatoria
-                    config_especial = f"potencia:{random.randint(1, 3)},ruta:{generar_ruta_aleatoria()}"
-                
-                elif tipo_dispositivo == "refrigerador":
-                    # Genera una temperatura aleatoria con la función que genera entre 2 y 8 gr
-                    temperatura = f"{generar_temperatura_aleatoria(min_temp=2, max_temp=8)}°C"
-
-                # Genera una fecha de modificación aleatoria
-                ultima_modificacion = generar_timestamp_aleatorio().strftime("%Y-%m-%d %H:%M:%S")
-                
-                # Manda todo al archivo CSV
-                writer.writerow([
-                    id_configuracion, id_dispositivo, nombre, 
-                    programacion_activa, hora_encendido, hora_apagado, 
-                    config_especial, ultima_modificacion
-                ])
-    
-    # Print para mostrar que todo salió bien
-    print("Datos para MongoDB generados correctamente.")
+   #regresa en json los dispositivos en la base de datos 
+   return get_x("/dispsitivos", )
 
 # Generación de datos para Dgraph (relaciones entre dispositivos)
 def generar_datos_dgraph():
