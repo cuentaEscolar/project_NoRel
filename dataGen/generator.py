@@ -97,12 +97,13 @@ def generar_datos_mongodb():
    #4) crear un mongo_dispositivos.csv con campos: id_dispositivo, "tipo_dispositivo, "id_casa)
    with open("mongo_dispositivos.csv", mode="w", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
-        writer.writerow(["id_dispositivo", "tipo_dispositivo", "id_casa"])
+        writer.writerow(["id_dispositivo", "tipo_dispositivo", "id_casa", "estado"])
         for dispositivo in dispositivos:
             writer.writerow([
                 dispositivo.get("_id"),
                 dispositivo.get("tipo"),
-                dispositivo.get("id_casa")
+                dispositivo.get("id_casa"),
+                dispositivo.get("estado")
             ])
     
    
