@@ -27,9 +27,9 @@ def get_id_casa(casa):
 #funcion para hacer el match segun que datos se den para la busqueda
 def crear_match(id_casa, tipo, estado):
     match = {"id_casa": id_casa}
-    if tipo is not None:
+    if tipo:
         match["tipo"] = tipo
-    if estado is not None:
+    if estado:
         match["estado"] = estado
     return {"$match": match}
 

@@ -35,7 +35,7 @@ def generar_nombre_config(tipo):
     configuraciones = {
         "aspiradora": ["Modo Turbo", "Limpieza Profunda", "Silencio Nocturno", "Aspiración Express", "Eco Friendly", "Energía Eco", "Eco", "Modo Vacaciones", "Preparación Fiesta de Noche", "Limpieza Pre-Cena Familiar", "Modo Relámpago para Película", "Limpieza Básica para Amigos", "Todo Reluciente"],
         "lavadora": ["Lavado Delicado", "Ropa Blanca Extra", "Eliminación de Manchas", "Lavado Express", "Ahorro de Agua", "Ropa formal", "Ropa delicada", "Lavado emergencia", "Emergencia", "Lavado domingos"],
-        "cerraduras": ["Modo Seguridad Máxima", "Acceso Familiar", "Bloqueo Automático", "Modo Invitado", "Sin Llaves", "Vacaciones", "Modo fiesta"],
+        "cerradura": ["Modo Seguridad Máxima", "Acceso Familiar", "Bloqueo Automático", "Modo Invitado", "Sin Llaves", "Vacaciones", "Modo fiesta"],
         "refrigerador": ["Modo Super Congelado", "Descongelado Automático", "Energía Eco", "Eco Friendly", "Modo Vacaciones",  "Conservación Extrema", "Bebidas frias: Fiesta", "Cena de noche"],
         "bombilla": ["Luz Relax", "Modo Lectura", "Color Festivo", "Luz de Energía Baja", "Ecologica", "Eco", "Eco Friendly", "Luz Día", "Luz Noche", "Ahorro", "Luces festivas", "Cena romantica", "Luces romanticas", "Modo cine", "Noche de peliculas", "Karaoke", "Luz relajante"],
         "aire_acondicionado": ["Modo Frío Intenso", "Ventilación Suave", "Modo Ahorro Energético", "Clima Tropical", "Calor Reconfortante", "Fresco", "Calido", "Clima por la mañana"]

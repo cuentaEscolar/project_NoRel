@@ -2,7 +2,7 @@ import Conexion.mongo_queries
 
 
 def set_username():
-    username = input('Ingresa tu sername: ')
+    username = input('Ingresa tu username: ')
     return username
 
 def set_num_casa():
@@ -62,18 +62,22 @@ def print_opcion_dispositivos():
         print('    ', key, '--', options[key])
 
 def select_tipo_dispositivo(opcion):
-    tipo = ""
-    if opcion == 1:
+    if opcion == "":
+        return None
+    else:
+        op = int(opcion)
+    
+    if op == 1:
         tipo = "aire_acondicionado"
-    if opcion == 2:
+    if op == 2:
         tipo = "bombilla"
-    if opcion == 3:
+    if op == 3:
         tipo = "refrigerador"
-    if opcion == 4:
+    if op == 4:
         tipo = "aspiradora"
-    if opcion == 5:
+    if op == 5:
         tipo = "cerradura"
-    if opcion == 6:
+    if op == 6:
         tipo = "lavadora"
     return tipo 
 
@@ -151,13 +155,13 @@ def main():
             num_casa = set_num_casa()
             id_casa = Conexion.mongo_queries.get_id_casa(num_casa)
             print_mongo_menu_dispositivos()
-            option_disp = input('Ingresa una opción: ')
+            option_disp = int(input('Ingresa una opción: '))
             select_opc_menu_dispositivos(id_casa, option_disp)
         if option == 4:
             num_casa = set_num_casa()
             id_casa = Conexion.mongo_queries.get_id_casa(num_casa)
             print_mongo_menu_configuraciones()
-            option_conf = input('Ingresa una opción: ')
+            option_conf = int(input('Ingresa una opción: '))
             select_opc_menu_configuraciones(id_casa, option_conf)
         if option == 5:
             #mostrar menu de dgraph
