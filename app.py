@@ -25,6 +25,12 @@ def print_menu():
 
 #Mongo menu
 #todas las busquedas son por casa
+def make_menu(options):
+
+    l = len(options)
+    for key in range(l):
+        print('    ', key + 1, '--', options[key])
+
 def print_mongo_menu():
     options = {
         1: "Mostrar cantidad de dispositivos",
