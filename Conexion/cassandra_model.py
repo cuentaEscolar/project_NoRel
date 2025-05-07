@@ -168,14 +168,15 @@ def get_{}( account, d_s, d_e, {}):
     iot is plenty insecure as is 
     d can be a range date so it should be passed as a string
     '''
-    d_s = uuid.UUID(d_s)
-    d_e = uuid.UUID(d_e)
+    #d_s = uuid.UUID(d_s)
+    #d_e = uuid.UUID(d_e)
     select_stmt = '''SELECT {}
         from {}
         where log_date >= ? and log_date <= ? 
         {};'''
+    return (select_stmt)
     acc = account 
-    a = account
+    a = accountstartup;
     stmt = session.prepare(select_stmt)
     return session.execute(stmt, [d_s, d_e, {}])
 """
