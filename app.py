@@ -83,7 +83,8 @@ def print_dgraph_menu():
         11: "Dispositivos en standy",
         12: "Dispositivos en habitación",
         13: "Dispositivos sincronizados entre sí",
-        14: "Dispositivos en cluster funcional"
+        14: "Dispositivos en cluster funcional",
+        15: "Regresar a menú principal"
     }
     for key in options.keys():
         print('    ', key, '--', options[key])
@@ -147,7 +148,7 @@ def select_opc_menu_relaciones(client, option):
         # Dispositivos en habitación
         casa_id = input("Ingresa el id de la casa: ")
         habitacion = input("Ingresa el nombre de la habitación: ")
-        print_dgraph_query_result("Dispositivos por Habitación", dq.dispositivos_por_habitacion(client, casa_id, habitacion_prueba))
+        print_dgraph_query_result("Dispositivos por Habitación", dq.dispositivos_por_habitacion(client, casa_id, habitacion))
     if option == 13:
         # Dispositivos sincronizados entre sí
         casa_id = input("Ingresa el id de la casa: ")
@@ -248,18 +249,17 @@ def select_opc_menu_configuraciones(id_casa, option_conf):
 def main():
     #ingresar username para poder usar la app
     username = set_username()
-    mongo_session =  mm.get_session()
-    cassandra_session = cm.get_session()
+    #mongo_session =  mm.get_session()
+    #cassandra_session = cm.get_session()
     dgraph_session = dc.DgraphConnection.initialize_dgraph()
 
-    print(mongo_session)
-    print(cassandra_session)
+    #print(mongo_session)
+    #print(cassandra_session)
     print(dgraph_session)
-    return
+    #return
 
 
     while(True):
-
         print_menu()
         option = int(input('Ingresa una opción: '))
         if option == 0:
@@ -269,6 +269,7 @@ def main():
             base_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dataGen')
             connection = DgraphConnection()
             uids = load_data_to_dgraph(base_path, connection) # Cargar los datos
+            print("Datos subidos a DGraph")
             ...
         if option == 1:
             Conexion.mongo_queries.get_usuario_info(username)
@@ -288,10 +289,13 @@ def main():
             option_conf = int(input('Ingresa una opción: '))
             select_opc_menu_configuraciones(id_casa, option_conf)
         if option == 5:
-            print("Menú de relaciones de dispositivos\n")
-            print_dgraph_menu()
-            option = int(input('Ingresa una opción: '))
-            select_opc_menu_relaciones(dgraph_session, option)
+            while (True):
+                print("Menú de relaciones de dispositivos\n")
+                print_dgraph_menu()
+                option = int(input('Ingresa una opción: '))
+                if option == 15:
+                    break
+                select_opc_menu_relaciones(dgraph_session, option)
             ...
         if option == 6:
             username = set_username()
