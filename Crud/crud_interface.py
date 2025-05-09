@@ -7,12 +7,10 @@ class CRUD:
     def advancedQueryFactory( self, names, vals):
         ...
 
-    #createX :: Object -> (Model) -> (req, res) -> None 
     @abstractmethod
     def createX(self, xClass):
         ...
 
-    #queryFromReqRes :: [String] -> (req,res)
     @abstractmethod
     def queryFromReqRes():
         ...
@@ -22,7 +20,6 @@ class CRUD:
         ...
     
     #
-    # deleteXbyY :: (xName, yName) -> Model -> (req, res) -> None
     @abstractmethod
     def deleteXbyY(self, xName, yName):
         ...

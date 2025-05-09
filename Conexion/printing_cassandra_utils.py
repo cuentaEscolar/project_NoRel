@@ -40,6 +40,17 @@ def nice_print(arr):
     res += " and " + coerce_to_string(arr[-1])
     return res
 
+def print_bonito(arr):
+    if not arr: return ""
+    if len(arr) == 0:
+        return ""
+    if len(arr) == 1:
+        return coerce_to_string(arr[0]) 
+    
+    res = reduce( lambda x, y: f"{x}, {y}", map( coerce_to_string, arr[:-1]))
+    res += " y " + coerce_to_string(arr[-1])
+    return res
+
 
 
 def printable_tables(TABLES):
@@ -75,11 +86,10 @@ def print_requirements():
         if "unit" not in ' '.join(FULL_PARAMETERS[table_name]):
             c+=1 
             print(tr(
-                td( f"Users should be able to filter from their account by {nice_print(FULL_PARAMETERS[table_name][1:]) }")
+                td( f"Los usuarios deberian de poder filtrar sus logs por {nice_print(FULL_PARAMETERS[table_name][1:]) }")
                 + 
-                td ( f"A set of rows matching the {nice_print(FULL_PARAMETERS[table_name]) }")
+                td ( f"Un grupo de filas con los {nice_print(FULL_PARAMETERS[table_name]) } correspondientes.")
             ))
-            continue
         
         newparameters = [ x for x in FULL_PARAMETERS[table_name]  if x!= "unit"]
         for unit in "voltage,light level,humidity,temperature".split(","):
@@ -93,6 +103,31 @@ def print_requirements():
             newparameters.pop() 
     print("</table>")
     print(c)
+
+def imprimir_reqs_cas(TABLES, FULL_PARAMETERS, arr_printer): 
+
+    header = tr( th("Requerimiento") + th("Resultado Esperado") )+ '\n'
+    res = header
+    for table_name, table_create in TABLES.items():
+
+        if "unit" not in ' '.join(FULL_PARAMETERS[table_name]):
+            res += tr(
+                td( f"Los usuarios deberian de poder filtar sus logs por {arr_printer(FULL_PARAMETERS[table_name][1:]) }")
+                + 
+                td ( f"Un grupo de filas con los {arr_printer(FULL_PARAMETERS[table_name]) } correspondientes")
+            ) + '\n'
+        
+        newparameters = [ x for x in FULL_PARAMETERS[table_name]  if x!= "unit"]
+        for unit in "voltaje,nivel de luz,humedad,temperatura".split(","):
+            newparameters.append(unit + " como el tipo de dato.")
+            res += (tr(
+                td( f"Users should be able to filter the logs by {arr_printer(newparameters) }")
+                + 
+                td ( f"A set of rows matching the {arr_printer(newparameters) }")
+            )) + '\n'
+            newparameters.pop() 
+
+    print(tabler(res))
 
 def tabulator(s , tabs=1):
     print("\t"*tabs + s)

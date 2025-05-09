@@ -1,6 +1,15 @@
-import Conexion.mongo_queries
-import Conexion.dgraph_queries
+import Conexion.mongo_queries as mq
+import Conexion.mongo_model as mm
+import Conexion.cassandra_model as cm
+import Conexion.dgraph_queries as dq
+import Conexion.dgraph_connection as dc
 
+import Conexion.mongo_queries
+import json
+from Conexion.dgraph_connection import DgraphConnection
+from Conexion.dgraph_loader import load_data_to_dgraph
+import Conexion.dgraph_queries
+import os
 
 def set_username():
     username = input('Ingresa tu username: ')
@@ -28,10 +37,11 @@ def print_menu():
 #Mongo menu
 #todas las busquedas son por casa
 def make_menu(options):
-
     l = len(options)
-    for key in range(l):
-        print('    ', key + 1, '--', options[key])
+    def _h_():
+        for key in range(l):
+            print('    ', key + 1, '--', options[key])
+    return _h_
 
 def print_mongo_menu():
     pass
@@ -238,12 +248,30 @@ def select_opc_menu_configuraciones(id_casa, option_conf):
 def main():
     #ingresar username para poder usar la app
     username = set_username()
+    mongo_session =  mm.get_session()
+    cassandra_session = cm.get_session()
+    dgraph_session =  dc.DgraphConnection()
+
+    dgraph_session.connect()
+    print(mongo_session)
+    print(cassandra_session)
+    print(dgraph_session)
+    return
+
 
     while(True):
+        # Hay que iniciar las bases de datos antes de empezar a manejarlas
+        dgraph_client = DgraphConnection.initialize_dgraph()
+
         print_menu()
         option = int(input('Ingresa una opción: '))
         if option == 0:
             #poblar bases de datos
+
+            # Dgraph
+            base_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dataGen')
+            connection = DgraphConnection()
+            uids = load_data_to_dgraph(base_path, connection) # Cargar los datos
             ...
         if option == 1:
             Conexion.mongo_queries.get_usuario_info(username)
@@ -264,10 +292,9 @@ def main():
             select_opc_menu_configuraciones(id_casa, option_conf)
         if option == 5:
             print("Menú de relaciones de dispositivos\n")
-            #mostrar menu de dgraph
-            #print_dgraph_menu()
-            #option_dgraph = int(input('Ingresa una opción: '))
-            #select_opc_menu_relaciones(option_dgraph)
+            print_dgraph_menu()
+            option_dgraph = int(input('Ingresa una opción: '))
+            select_opc_menu_relaciones(option_dgraph)
             ...
         if option == 6:
             username = set_username()

@@ -13,8 +13,11 @@ from datetime import datetime, timedelta
 from cassandra.util import uuid_from_time
 from Conexion.printing_cassandra_utils import coerce_to_string
 from Conexion.mongo_gets import get_x
+from Conexion.mongo_model import base_populate, get_session
+from Conexion.mongo_script import generador
 from Conexion.mongo_model import get_session, get_database
 from uuid import UUID
+from bson import ObjectId
 
 import os
 import uuid
@@ -23,6 +26,8 @@ import json  # Generamos JSON en vez de CSV para Dgraph
 from bson import ObjectId
 
 # De esta variable depende el número de datos creados
+#
+NUM_USUARIOS = 200
 NUM_CASAS = 10
 
 #variable de usuarios a crear
@@ -274,14 +279,26 @@ def poblar_mongodb(db):
 
 #funcion para generar los datos en mongo y el csv con los campos "id_dispositivo", "tipo_dispositivo", "id_casa", "estado"
 def generar_datos_mongodb():
-   #1) generar session con get_session y database
-   session = get_session()
-   db = get_database(session)
-   #2) poblar base de datos de mongo 
-   poblar_mongodb(db)
-   #3) llamar a get_x con sufijo a dispsoitivos. Regresa json de todos los dispositivos en base de datos
+    #1) generar session con get_session
+    session = get_session() 
+    db =  session["intelligent_houses"]
+    #2) poblar base de datos de mongo con base_populate
+    usuarios_collection = db["usuarios"]
+    casas_collection = db["casas"]
+    dispositivos_collection = db["dispositivos"]
+    configuraciones_collection = db["configuraciones"]
+
+    return generador(usuarios_collection, casas_collection, dispositivos_collection, configuraciones_collection)
+    #1) generar session con get_session y database
+    session = get_session()
+    db = get_database(session)
+    #2) poblar base de datos de mongo 
+    poblar_mongodb(db)
+    #3) llamar a get_x con sufijo a dispsoitivos. Regresa json de todos los dispositivos en base de datos
+    #4) crear un mongo_dispositivos.csv con campos: id_dispositivo, "tipo_dispositivo, "id_casa)
+    
+def export_data_mongodb(session):
    dispositivos = get_x("/dispositivos", )
-   #4) crear un mongo_dispositivos.csv con campos: id_dispositivo, "tipo_dispositivo, "id_casa)
    with open("mongo_dispositivos.csv", mode="w", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
         writer.writerow(["id_dispositivo", "tipo_dispositivo", "id_casa", "estado"])
@@ -292,7 +309,6 @@ def generar_datos_mongodb():
                 dispositivo.get("id_casa"),
                 dispositivo.get("estado")
             ])
-    
 # Generación de datos para Dgraph (relaciones entre dispositivos)
 def generar_datos_dgraph():
     """
@@ -484,8 +500,15 @@ def main():
     print(f"Generando datos para {NUM_CASAS} casas...")
     
     generar_datos_mongodb()
+<<<<<<< HEAD
     generar_datos_dgraph()
     generar_datos_cassandra()
+=======
+    #generar_datos_dgraph()
+    generar_datos_cassandra()
+    # generar_datos_dgraph()
+    # generar_datos_cassandra()
+>>>>>>> d3bdfbf518148cb3facac81367da3a3bc6328e64
     
     print("\nProceso completado. Los archivos CSV se han guardado en el directorio actual.")
     print("Resumen de archivos generados:")
