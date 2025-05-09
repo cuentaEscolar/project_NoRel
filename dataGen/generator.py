@@ -484,17 +484,17 @@ def main():
     print(f"Generando datos para {NUM_CASAS} casas...")
     
     generar_datos_mongodb()
-    # generar_datos_dgraph()
-    # generar_datos_cassandra()
+    generar_datos_dgraph()
+    generar_datos_cassandra()
     
-    # print("\nProceso completado. Los archivos CSV se han guardado en el directorio actual.")
-    # print("Resumen de archivos generados:")
-    # # Esta parte da un resumen de los archivos generados y su tamaño
-    # for archivo in os.listdir("."):
-    #     if archivo.endswith(".py"): # Si es un archivo .py (como este código), se lo salta para no mostrarlo en el resumen
-    #         continue
-    #     tamaño = os.path.getsize(f"{archivo}") / 1024  # Tamaño en KB
-    #     print(f"- {archivo}: {tamaño:.2f} KB")
+    print("\nProceso completado. Los archivos CSV se han guardado en el directorio actual.")
+    print("Resumen de archivos generados:")
+    # Esta parte da un resumen de los archivos generados y su tamaño
+    for archivo in os.listdir("."):
+        if archivo.endswith(".py"): # Si es un archivo .py (como este código), se lo salta para no mostrarlo en el resumen
+            continue
+        tamaño = os.path.getsize(f"{archivo}") / 1024  # Tamaño en KB
+        print(f"- {archivo}: {tamaño:.2f} KB")
 
 if __name__ == "__main__":
     main()
