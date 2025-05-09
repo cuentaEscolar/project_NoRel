@@ -11,16 +11,19 @@ import random
 # Usamos esta librería para definir fechas
 from datetime import datetime, timedelta
 from cassandra.util import uuid_from_time
+from Conexion import cassandra_model
 from Conexion.printing_cassandra_utils import coerce_to_string
 from Conexion.mongo_gets import get_x
 from Conexion.mongo_model import get_session
 
-from uuid import UUID, uuid5, NAMESPACE_DNS
+from uuid import uuid5, NAMESPACE_DNS
 import os
-import uuid
 import json  # Generamos JSON en vez de CSV para Dgraph
 
 from bson import ObjectId
+
+from Conexion.dgraph_connection import DgraphConnection #Conexion a Dgraph
+from Conexion.dgraph_loader import load_data_to_dgraph # Carga de datos a Dgraph
 
 # De esta variable depende el número de datos creados
 #
@@ -420,7 +423,10 @@ def generar_datos_dgraph():
                     # Crear las relaciones de sincronización
                     for disp_sync, _ in dispositivos_sincronizar:
                         writer_rel.writerow([id_disp, "sincroniza_con", disp_sync])
-    
+
+    dgraph_client = DgraphConnection.initialize_dgraph()
+    data_gen_path = os.path.dirname(os.path.abspath(__file__))
+    uids = load_data_to_dgraph(data_gen_path, None)
     print("Datos para Dgraph generados correctamente en formato CSV.")
 
 def load_csv_devices(file):
@@ -486,6 +492,10 @@ def emit_cassandra_data_from_csv(the_csv, f):
         fecha_actual += timedelta(days=1)
 
 def generar_datos_cassandra():
+    cassandra_session = cassandra_model.get_session()
+    cassandra_model.test_session(cassandra_session)
+    emit_cassandra_data_from_csv("../dataGen/mongodb_dispositivos.csv", cassandra_model.insert_data(cassandra_session)  )
+
     # Lee los dispositivos del archivo para MongoDB para mantener consistencia
     with open("cassandra_logs.csv", "w", newline="", encoding="utf-8") as f:
 
@@ -500,11 +510,11 @@ def main():
     print(f"Generando datos para {NUM_USUARIOS} usuarios...")
     
     generar_datos_mongodb()
-    export_data_mongodb() #generar csv necesarios para dgraph y 
+    export_data_mongodb() #generar csv necesarios para dgraph y cassandra
     generar_datos_dgraph()
     generar_datos_cassandra()
   
-    print("\nProceso completado. Los archivos CSV se han guardado en el directorio actual.")
+    print("\nProceso completado.")
     
 
 if __name__ == "__main__":
