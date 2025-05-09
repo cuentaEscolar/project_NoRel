@@ -15,6 +15,7 @@ from Conexion.printing_cassandra_utils import coerce_to_string
 from Conexion.mongo_gets import get_x
 from Conexion.mongo_model import base_populate, get_session
 from Conexion.mongo_script import generador
+from Conexion.mongo_model import get_session, get_database
 from uuid import UUID
 from bson import ObjectId
 
@@ -22,10 +23,15 @@ import os
 import uuid
 import json  # Generamos JSON en vez de CSV para Dgraph
 
+from bson import ObjectId
+
 # De esta variable depende el número de datos creados
 #
 NUM_USUARIOS = 200
 NUM_CASAS = 10
+
+#variable de usuarios a crear
+NUM_USUARIOS = 5
 
 # La fecha inicial es hace 30 días
 FECHA_INICIAL = datetime.now() - timedelta(days=30)
@@ -91,6 +97,187 @@ def generar_locacion_aleatoria():
     locaciones.extend(["habitación de invitados", "sala principal", "habitación principal", "cocina", "oficina"])
     return random.choice(locaciones)
 
+#FUNCIONES QUE SE USAN PARA CREAR DATOS DE MONGO
+def validar_hora_on_off():
+    while True:
+        hora_on = generar_hora_aleatoria()
+        hora_off = generar_hora_aleatoria()
+        if (hora_off >= hora_on):
+            return hora_on, hora_off
+
+def generar_fecha_mongo(inicio, fin):
+    fecha_inicio = datetime.strptime(inicio, "%Y-%m-%d")
+    fecha_fin = datetime.strptime(fin, "%Y-%m-%d")
+
+    delta_dias = (fecha_fin - fecha_inicio).days
+    dias_random = random.randint(0, delta_dias)
+
+    fecha_random = fecha_inicio + timedelta(days=dias_random)
+    return fecha_random.strftime("%Y-%m-%d")
+
+def formatear_fecha(fecha):
+    return fecha.strftime("%Y-%m-%d")
+
+#funciones para generar el nombre de configuracion segun su tipo
+def generar_nombre_config(tipo):
+    configuraciones = {
+        "aspiradora": ["Modo Turbo", "Limpieza Profunda", "Silencio Nocturno", "Aspiración Express", "Eco Friendly", "Energía Eco", "Eco", "Modo Vacaciones", "Preparación Fiesta de Noche", "Limpieza Pre-Cena Familiar", "Modo Relámpago para Película", "Limpieza Básica para Amigos", "Todo Reluciente"],
+        "lavadora": ["Lavado Delicado", "Ropa Blanca Extra", "Eliminación de Manchas", "Lavado Express", "Ahorro de Agua", "Ropa formal", "Ropa delicada", "Lavado emergencia", "Emergencia", "Lavado domingos"],
+        "cerradura": ["Modo Seguridad Máxima", "Acceso Familiar", "Bloqueo Automático", "Modo Invitado", "Sin Llaves", "Vacaciones", "Modo fiesta"],
+        "refrigerador": ["Modo Super Congelado", "Descongelado Automático", "Energía Eco", "Eco Friendly", "Modo Vacaciones",  "Conservación Extrema", "Bebidas frias: Fiesta", "Cena de noche"],
+        "bombilla": ["Luz Relax", "Modo Lectura", "Color Festivo", "Luz de Energía Baja", "Ecologica", "Eco", "Eco Friendly", "Luz Día", "Luz Noche", "Ahorro", "Luces festivas", "Cena romantica", "Luces romanticas", "Modo cine", "Noche de peliculas", "Karaoke", "Luz relajante"],
+        "aire_acondicionado": ["Modo Frío Intenso", "Ventilación Suave", "Modo Ahorro Energético", "Clima Tropical", "Calor Reconfortante", "Fresco", "Calido", "Clima por la mañana"]
+    }
+    nombre = random.choice(configuraciones.get(tipo, ["Configuración desconocida"]))
+    return nombre
+
+#genera los dispositivos de mongo
+def generar_dispositivos(casa_id, dispositivos_collection, configuraciones_collection):
+    fecha_actual = formatear_fecha(FECHA_FINAL)
+    dispositivos_for_casaCollection = {"aire_acondicionado": [],"bombilla": [],"refrigerador": [],"cerradura": [],"aspiradora": [],"lavadora": [],}
+    dispositivos = []
+    num_dispositivos = { 
+        "aire_acondicionado": random.randint(1, 3),
+        "bombilla": random.randint(5, 15),
+        "cerradura": random.randint(1, 6),
+        "aspiradora": random.randint(0, 2),
+        "refrigerador": random.randint(1, 2),
+        "lavadora": random.randint(1, 2)
+    }     
+    for tipo, cantidad in num_dispositivos.items():
+        for i in range(cantidad):
+            dispositivo_id = ObjectId()
+            nombre = f"{tipo.replace('_', ' ').capitalize()} {i}"
+            fecha_instalacion = generar_fecha_mongo("2020-01-01", fecha_actual)
+            configuraciones = (generar_configuraciones(tipo, dispositivo_id, configuraciones_collection, fecha_instalacion))
+            dispositivos.append({
+                "_id": dispositivo_id,
+                "id_casa": casa_id,
+                "tipo": tipo,
+                "nombre_dispositivo": nombre,
+                "estado": random.choice(["activo", "desactivo"]),
+                "modelo": f"Modelo-{random.randint(1, 50)}",
+                "fecha_instalacion": fecha_instalacion,
+                "configuraciones": configuraciones
+            })
+            dispositivos_for_casaCollection[tipo].append({"id_dispositivo": dispositivo_id})
+    dispositivos_collection.insert_many(dispositivos)
+    return dispositivos_for_casaCollection
+        
+#genera las configuraciones de un dispositivo
+def generar_configuraciones(tipo, dispositivo_id, configuraciones_collection, fecha_instalacion):
+    fecha_actual = formatear_fecha(FECHA_FINAL)
+    configuraciones_for_dispCollection = []
+    configuraciones=[]
+    for _ in range(random.randint(1, 5)): 
+        hora_on, hora_off = validar_hora_on_off()
+        config_result = { 
+            "_id": ObjectId(),
+            "id_dispositivo": dispositivo_id,
+            "nombre_configuracion": generar_nombre_config(tipo),
+            "estado_configuracion": random.choice(["activo", "desactivo"]),
+            "hora_on": hora_on,
+            "hora_off": hora_off,
+            "ubicacion": generar_locacion_aleatoria(),
+            "fecha_ultima_modificacion": generar_fecha_mongo(fecha_instalacion, fecha_actual),
+            "config_especial": generar_configuracion_especial(tipo, hora_on, hora_off)
+        }
+        configuraciones.append(config_result)
+        configuraciones_for_dispCollection.append({"nombre_config":config_result["nombre_configuracion"], "id_config": config_result["_id"]})
+
+    configuraciones_collection.insert_many(configuraciones)
+    return configuraciones_for_dispCollection
+
+#genera la configuracion especial
+def generar_configuracion_especial(tipo, hora_on, hora_off):
+    def generar_hora_autolimpieza(hora_on, hora_off):
+        hora_inicial = int(hora_on.split(':')[0])
+        hora_final = int(hora_off.split(':')[0])
+        hora = f"{random.randint(hora_inicial, hora_final):02}:{random.choice([0, 15, 30, 45]):02}"
+        return hora
+
+    configuraciones = {
+        "aspiradora": {
+            "hora_autolimpieza": generar_hora_autolimpieza(hora_on, hora_off),
+            "ruta": generar_ruta_aleatoria()
+        },
+        "lavadora": {
+            "ciclos_lavado": random.sample(["secado", "exprimir", "enjuague", "centrifugado", "lavado"],random.randint(1, 5)),
+            "carga": random.choice(["pesada", "ligera", "normal"]),
+            "nivel_agua": random.choice(["alta", "media", "baja", "minimo"]),
+            "temperatura_agua": random.choice(["fria", "caliente"])
+        },
+        "bombilla": {
+            "brillo": random.randint(10, 100),
+            "color": generar_color_aleatorio()
+        },
+        "aire_acondicionado": {
+            "temperatura": generar_temperatura_aleatoria(min_temp=16, max_temp=30),
+            "unidad": random.choice(["K", "C°", "F"])
+        },
+        "refrigerador": {
+            "temperatura": generar_temperatura_aleatoria(0, 10),
+            "unidad": random.choice(["K", "C°", "F"])
+        }
+    }
+    return configuraciones.get(tipo, {"error": "No se encontro tipo de dispositivo"})
+
+#generar usurios y casas de mongo
+#de hay se crean sus dispositivos y configuraciones
+def generador_usuarios_casas(usuarios_collection, casas_collection, dispositivos_collection, configuraciones_collection):
+    usuarios = []
+    casas = []
+    count = 1
+    for i in range(NUM_USUARIOS):
+        user_casas = []
+        user_id = ObjectId()
+        usuarios_result = {
+            "_id": user_id,
+            "username": f"user_{i}",
+            "correo": f"user{i}@gmail.com",
+            "casas": user_casas
+        }
+        for _ in range(random.randint(1, 3)):
+            casa_id = ObjectId()
+            num_casa = count
+            count += 1
+            user_casas.append({"num_casa":num_casa, "id_casa": casa_id})
+            casa_dispositivos = generar_dispositivos(casa_id, dispositivos_collection, configuraciones_collection)
+            casa_result = {
+                "_id": casa_id,
+                "id_usuario": user_id,  
+                "num_casa": num_casa,
+                "dispositivos": casa_dispositivos
+            }
+            casas.append(casa_result)
+        usuarios.append(usuarios_result)
+    casas_collection.insert_many(casas)
+    usuarios_collection.insert_many(usuarios)
+
+#crear indices de mongo
+def crear_indices_mongo(db):
+    db.casas.create_index({"num_casa": 1})
+    db.dispositivos.create_index({"nombre_dispositivo": "text"})
+    db.dispositivos.create_index({"tipo": 1})
+    db.dispositivos.create_index({"estado": 1})
+    db.dispositivos.create_index({"fecha_instalacion": 1})
+    db.dispositivos.create_index({ "id_casa": 1 })
+    db.configuraciones.create_index({"estado_configuracion": 1})
+    db.configuraciones.create_index({"nombre_configuracion": "text"})
+    db.configuraciones.create_index({"fecha_ultima_modificacion": 1})
+    db.configuraciones.create_index({"hora_on": 1})
+    db.configuraciones.create_index({ "id_dispositivo": 1 })
+
+#funcion para poblar base de datos
+def poblar_mongodb(db):
+    usuarios_collection = db["usuarios"]
+    casas_collection = db["casas"]
+    dispositivos_collection = db["dispositivos"]
+    configuraciones_collection = db["configuraciones"]
+    generador_usuarios_casas(usuarios_collection, casas_collection, dispositivos_collection, configuraciones_collection)
+    crear_indices_mongo(db)
+
+#funcion para generar los datos en mongo y el csv con los campos "id_dispositivo", "tipo_dispositivo", "id_casa", "estado"
 def generar_datos_mongodb():
     #1) generar session con get_session
     session = get_session() 
@@ -102,8 +289,11 @@ def generar_datos_mongodb():
     configuraciones_collection = db["configuraciones"]
 
     return generador(usuarios_collection, casas_collection, dispositivos_collection, configuraciones_collection)
-
-    
+   #1) generar session con get_session y database
+   session = get_session()
+   db = get_database(session)
+   #2) poblar base de datos de mongo 
+   poblar_mongodb(db)
    #3) llamar a get_x con sufijo a dispsoitivos. Regresa json de todos los dispositivos en base de datos
    #4) crear un mongo_dispositivos.csv con campos: id_dispositivo, "tipo_dispositivo, "id_casa)
     
@@ -120,8 +310,6 @@ def export_data_mongodb(session):
                 dispositivo.get("id_casa"),
                 dispositivo.get("estado")
             ])
-   
-
 # Generación de datos para Dgraph (relaciones entre dispositivos)
 def generar_datos_dgraph():
     """
@@ -251,7 +439,6 @@ def load_csv_devices(file):
                                       "account":row["id_casa"]})
     return dispositivos
 
-
 def gen_random_timestamp(current_date):
     return  (current_date + timedelta(hours=random.randint(0, 23), minutes=random.randint(0, 59)))
 # Generación de datos para Cassandra (datos de sensores en tiempo real)
@@ -309,7 +496,6 @@ def generar_datos_cassandra():
         emit_cassandra_data_from_csv("mongodb_dispositivos.csv", writer.writerow)
     print("Datos para Cassandra generados correctamente.")
     
-
 # Función principal
 def main():
     print(f"Generando datos para {NUM_CASAS} casas...")
@@ -317,15 +503,17 @@ def main():
     generar_datos_mongodb()
     #generar_datos_dgraph()
     generar_datos_cassandra()
+    # generar_datos_dgraph()
+    # generar_datos_cassandra()
     
-    print("\nProceso completado. Los archivos CSV se han guardado en el directorio actual.")
-    print("Resumen de archivos generados:")
-    # Esta parte da un resumen de los archivos generados y su tamaño
-    for archivo in os.listdir("."):
-        if archivo.endswith(".py"): # Si es un archivo .py (como este código), se lo salta para no mostrarlo en el resumen
-            continue
-        tamaño = os.path.getsize(f"{archivo}") / 1024  # Tamaño en KB
-        print(f"- {archivo}: {tamaño:.2f} KB")
+    # print("\nProceso completado. Los archivos CSV se han guardado en el directorio actual.")
+    # print("Resumen de archivos generados:")
+    # # Esta parte da un resumen de los archivos generados y su tamaño
+    # for archivo in os.listdir("."):
+    #     if archivo.endswith(".py"): # Si es un archivo .py (como este código), se lo salta para no mostrarlo en el resumen
+    #         continue
+    #     tamaño = os.path.getsize(f"{archivo}") / 1024  # Tamaño en KB
+    #     print(f"- {archivo}: {tamaño:.2f} KB")
 
 if __name__ == "__main__":
     main()
