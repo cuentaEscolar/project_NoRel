@@ -2,7 +2,7 @@
 import falcon.asgi
 import logging
 
-from Conexion.mongo_model import get_database, get_session
+from Conexion.mongo_model import get_session
 
 from Conexion.mongo_resources import DispositivosResource, ConfiguracionesResource, CasasResource, UsuariosResource, DispositivosAgregacionResource, CasasAgregacionResource, ConfiguracionesAgregacionResource
 
@@ -18,7 +18,7 @@ class LoggingMiddleware:
 
 # Initialize MongoDB client and database
 client = get_session()
-db = get_database(client)
+db = client["intelligent_houses"]
 
 # Create the Falcon application
 app = falcon.asgi.App(middleware=[LoggingMiddleware()])

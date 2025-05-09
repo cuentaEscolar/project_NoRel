@@ -13,12 +13,9 @@ from datetime import datetime, timedelta
 from cassandra.util import uuid_from_time
 from Conexion.printing_cassandra_utils import coerce_to_string
 from Conexion.mongo_gets import get_x
-from Conexion.mongo_model import base_populate, get_session
-from Conexion.mongo_script import generador
-from Conexion.mongo_model import get_session, get_database
-from uuid import UUID
-from bson import ObjectId
+from Conexion.mongo_model import get_session
 
+from uuid import UUID 
 import os
 import uuid
 import json  # Generamos JSON en vez de CSV para Dgraph
@@ -27,9 +24,7 @@ from bson import ObjectId
 
 # De esta variable depende el número de datos creados
 #
-NUM_USUARIOS = 200
-NUM_CASAS = 10
-
+NUM_USUARIOS = 20
 
 # La fecha inicial es hace 30 días
 FECHA_INICIAL = datetime.now() - timedelta(days=30)
@@ -270,22 +265,32 @@ def crear_indices_mongo(db):
 def poblar_mongodb(db, usuarios_collection, casas_collection, dispositivos_collection, configuraciones_collection):
     generador_usuarios_casas(usuarios_collection, casas_collection, dispositivos_collection, configuraciones_collection)
     crear_indices_mongo(db)
+    print("Datos de Mongo creados correctamente")
 
 #funcion para generar los datos en mongo y el csv con los campos "id_dispositivo", "tipo_dispositivo", "id_casa", "estado"
 def generar_datos_mongodb():
     #1) generar session con get_session
     session = get_session() 
     db =  session["intelligent_houses"]
-    #2) poblar base de datos de mongo con base_populate
+    #2) poblar base de datos de mongo con poblar_mongo
     usuarios_collection = db["usuarios"]
     casas_collection = db["casas"]
     dispositivos_collection = db["dispositivos"]
     configuraciones_collection = db["configuraciones"]
     return poblar_mongodb(db, usuarios_collection, casas_collection, dispositivos_collection, configuraciones_collection)
-    
-    
-    
-def export_data_mongodb(session):
+
+def get_longitud_casas():
+    pipeline = [{
+    "$group": {
+      "_id": "null", 
+      "count": { "$sum": 1 }
+    }
+    }]
+    agg_p = json.dumps(pipeline)
+    data = get_x("/casas/agregacion",agg = agg_p)
+    return data
+
+def export_data_mongodb():
     #3) llamar a get_x con sufijo a dispsoitivos. Regresa json de todos los dispositivos en base de datos
     #4) crear un mongo_dispositivos.csv con campos: id_dispositivo, "tipo_dispositivo, "id_casa)
    dispositivos = get_x("/dispositivos", )
@@ -299,6 +304,7 @@ def export_data_mongodb(session):
                 dispositivo.get("id_casa"),
                 dispositivo.get("estado")
             ])
+
 # Generación de datos para Dgraph (relaciones entre dispositivos)
 def generar_datos_dgraph():
     """
@@ -330,7 +336,7 @@ def generar_datos_dgraph():
         
         # Leer dispositivos existentes del archivo MongoDB
         dispositivos = []
-        with open("mongodb_dispositivos.csv", "r", newline="", encoding="utf-8") as f_mongo_disp:
+        with open("mongo_dispositivos.csv", "r", newline="", encoding="utf-8") as f_mongo_disp:
             reader = csv.DictReader(f_mongo_disp)
             for row in reader:
                 dispositivos.append((row["id_dispositivo"], row["tipo_dispositivo"], row["id_casa"]))
@@ -343,13 +349,14 @@ def generar_datos_dgraph():
             dispositivos_por_tipo[tipo_disp].append((id_disp, casa_id))
         
         # Generar datos para cada casa
-        for casa_id in range(1, NUM_CASAS + 1):
+        num_casas = get_longitud_casas()[0]["count"]
+        for casa_id in range(1, num_casas + 1):
             # Escribir datos de la casa
             casa_id_str = f"casa_{casa_id}"
             writer_casas.writerow([casa_id_str, f"Casa {casa_id}"])
             
             # Filtrar dispositivos de esta casa
-            disp_casa = [d for d in dispositivos if int(d[2]) == casa_id]
+            disp_casa = [d for d in dispositivos if str(d[2]) == casa_id]
             
             # Escribir dispositivos y su relación con la casa
             for id_disp, tipo_disp, _ in disp_casa:
@@ -421,11 +428,12 @@ def load_csv_devices(file):
     with open(file, "r", newline="", encoding="utf-8") as f_disp:
         reader = csv.DictReader(f_disp) # Leer el archivo como un diccionario
         for row in reader:
-            if row["activo"] == "True":  # Solo generar datos para dispositivos activos
+            if row["estado"] == "activo":  # Solo generar datos para dispositivos activos
                 # Añadir el dispositivo a la lista creada unas lineas arriba
                 dispositivos.append( { "device_uuid": row["id_dispositivo"], 
                                       "device_type": row["tipo_dispositivo"], 
                                       "account":row["id_casa"]})
+    #print(dispositivos)
     return dispositivos
 
 def gen_random_timestamp(current_date):
@@ -461,9 +469,10 @@ def cassandra_log(timestamp, device):
     functions_per_unit["hora_apertura"] = lambda : gen_random_timestamp(timestamp)
     functions_per_unit['kWh'] = lambda : generar_consumo_energia_aleatorio(device['device_type'])
     result = []
+    print_ret = (lambda x: (print(x), UUID.fromString(x.toString()))[1])
     for unit in units_per_device_type[device["device_type"]]:
         result.append (( device["account"], device['device_type'], uuid_from_time(gen_random_timestamp(timestamp)), 
-                        UUID(device['device_uuid']), unit, coerce_to_string(functions_per_unit[unit]()), '') )
+                        print_ret(device['device_uuid']), unit, coerce_to_string(functions_per_unit[unit]()), '') )
     return result
 
 def emit_cassandra_data_from_csv(the_csv, f):
@@ -482,32 +491,20 @@ def generar_datos_cassandra():
         writer = csv.writer(f)
         writer.writerow([ "account", "device_type", "log_date", "device", 
             "unit", "value", "comment" ])
-        emit_cassandra_data_from_csv("mongodb_dispositivos.csv", writer.writerow)
+        emit_cassandra_data_from_csv("mongo_dispositivos.csv", writer.writerow)
     print("Datos para Cassandra generados correctamente.")
     
 # Función principal
 def main():
-    print(f"Generando datos para {NUM_CASAS} casas...")
+    print(f"Generando datos para {NUM_USUARIOS} usuarios...")
     
     generar_datos_mongodb()
-<<<<<<< HEAD
+    export_data_mongodb() #generar csv necesarios para dgraph y 
     generar_datos_dgraph()
     generar_datos_cassandra()
-=======
-    #generar_datos_dgraph()
-    generar_datos_cassandra()
-    # generar_datos_dgraph()
-    # generar_datos_cassandra()
->>>>>>> d3bdfbf518148cb3facac81367da3a3bc6328e64
-    
+  
     print("\nProceso completado. Los archivos CSV se han guardado en el directorio actual.")
-    print("Resumen de archivos generados:")
-    # Esta parte da un resumen de los archivos generados y su tamaño
-    for archivo in os.listdir("."):
-        if archivo.endswith(".py"): # Si es un archivo .py (como este código), se lo salta para no mostrarlo en el resumen
-            continue
-        tamaño = os.path.getsize(f"{archivo}") / 1024  # Tamaño en KB
-        print(f"- {archivo}: {tamaño:.2f} KB")
+    
 
 if __name__ == "__main__":
     main()
