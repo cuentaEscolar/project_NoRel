@@ -1,5 +1,8 @@
-import Conexion.mongo_queries
-import Conexion.dgraph_queries
+import Conexion.mongo_queries as mq
+import Conexion.mongo_model as mm
+import Conexion.cassandra_model as cm
+import Conexion.dgraph_queries as dq
+import Conexion.dgraph_connection as dc
 
 
 def set_username():
@@ -28,10 +31,11 @@ def print_menu():
 #Mongo menu
 #todas las busquedas son por casa
 def make_menu(options):
-
     l = len(options)
-    for key in range(l):
-        print('    ', key + 1, '--', options[key])
+    def _h_():
+        for key in range(l):
+            print('    ', key + 1, '--', options[key])
+    return _h_
 
 def print_mongo_menu():
     pass
@@ -238,6 +242,16 @@ def select_opc_menu_configuraciones(id_casa, option_conf):
 def main():
     #ingresar username para poder usar la app
     username = set_username()
+    mongo_session =  mm.get_session()
+    cassandra_session = cm.get_session()
+    dgraph_session =  dc.DgraphConnection()
+
+    dgraph_session.connect()
+    print(mongo_session)
+    print(cassandra_session)
+    print(dgraph_session)
+    return
+
 
     while(True):
         print_menu()

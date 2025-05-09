@@ -68,7 +68,16 @@ SHORTNAME_VALUES = {
     "v": "value"
     }
 
+SHORTNAME_VALUES_ES = {
+    "a": "cuenta" ,
+    "d":  "fecha_del_log",
+    "de": "dispositivo" ,
+    "u": "unidad" ,
+    "v": "valor"
+    }
+
 FULLNAMER = (lambda x: SHORTNAME_VALUES[x])
+FULLNAMER_ES = (lambda x: SHORTNAME_VALUES_ES[x])
 
 TABLE_NAMES = [
     "log_by_a_d",
@@ -81,6 +90,7 @@ TABLE_NAMES = [
 SHORTENED_TABLE_PARAMETERS = { table : list(map( lambda x: x, (table.split("_"))[4:])) for table in TABLE_NAMES}
 TABLE_PARAMETERS = { table : list(map( FULLNAMER, (table.split("_"))[4:])) for table in TABLE_NAMES}
 FULL_PARAMETERS = { table : list(map( FULLNAMER, (table.split("_"))[2:])) for table in TABLE_NAMES}
+FULL_PARAMETERS_ES = { table : list(map( FULLNAMER_ES, (table.split("_"))[2:])) for table in TABLE_NAMES}
 
 def execute_batch(session, stmt, data):
     batch_size = 10

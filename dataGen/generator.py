@@ -14,13 +14,17 @@ from cassandra.util import uuid_from_time
 from Conexion.printing_cassandra_utils import coerce_to_string
 from Conexion.mongo_gets import get_x
 from Conexion.mongo_model import base_populate, get_session
+from Conexion.mongo_script import generador
 from uuid import UUID
+from bson import ObjectId
 
 import os
 import uuid
 import json  # Generamos JSON en vez de CSV para Dgraph
 
 # De esta variable depende el número de datos creados
+#
+NUM_USUARIOS = 200
 NUM_CASAS = 10
 
 # La fecha inicial es hace 30 días
@@ -88,13 +92,24 @@ def generar_locacion_aleatoria():
     return random.choice(locaciones)
 
 def generar_datos_mongodb():
-   #1) generar session con get_session
-   session = get_session()
-   #2) poblar base de datos de mongo con base_populate
-   base_populate(session)
+    #1) generar session con get_session
+    session = get_session() 
+    db =  session["intelligent_houses"]
+    #2) poblar base de datos de mongo con base_populate
+    usuarios_collection = db["usuarios"]
+    casas_collection = db["casas"]
+    dispositivos_collection = db["dispositivos"]
+    configuraciones_collection = db["configuraciones"]
+
+    return generador(usuarios_collection, casas_collection, dispositivos_collection, configuraciones_collection)
+
+    
    #3) llamar a get_x con sufijo a dispsoitivos. Regresa json de todos los dispositivos en base de datos
-   dispositivos = get_x("/dispositivos", )
    #4) crear un mongo_dispositivos.csv con campos: id_dispositivo, "tipo_dispositivo, "id_casa)
+    
+def export_data_mongodb(session):
+
+   dispositivos = get_x("/dispositivos", )
    with open("mongo_dispositivos.csv", mode="w", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
         writer.writerow(["id_dispositivo", "tipo_dispositivo", "id_casa", "estado"])
@@ -105,7 +120,6 @@ def generar_datos_mongodb():
                 dispositivo.get("id_casa"),
                 dispositivo.get("estado")
             ])
-    
    
 
 # Generación de datos para Dgraph (relaciones entre dispositivos)
@@ -301,7 +315,7 @@ def main():
     print(f"Generando datos para {NUM_CASAS} casas...")
     
     generar_datos_mongodb()
-    generar_datos_dgraph()
+    #generar_datos_dgraph()
     generar_datos_cassandra()
     
     print("\nProceso completado. Los archivos CSV se han guardado en el directorio actual.")
