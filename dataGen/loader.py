@@ -6,7 +6,6 @@ from dataGen import generator
 import os
 
 if __name__ == "__main__":
-    print("hi")
     cassandra_session = cassandra_model.get_session()
     cassandra_model.test_session(cassandra_session)
     generator.emit_cassandra_data_from_csv("../dataGen/mongodb_dispositivos.csv", cassandra_model.insert_data(cassandra_session)  )
@@ -15,9 +14,8 @@ if __name__ == "__main__":
     #mongo_model.test_session(mongo_session)
     print(type(mongo_session))
 
+    # DGraph
     dgraph_client = DgraphConnection.initialize_dgraph()
-        
-    # Como la función load_data_to_dgraph espera recibir la carpeta donde están los csv
-    # Era más fácil pasarle la carpeta con 'os' que reescribir la función para asumir que es la carpeta actual
     data_gen_path = os.path.dirname(os.path.abspath(__file__))
     uids = load_data_to_dgraph(data_gen_path, None)
+    print("Datos subidos a DGraph")
