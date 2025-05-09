@@ -30,8 +30,6 @@ from bson import ObjectId
 NUM_USUARIOS = 200
 NUM_CASAS = 10
 
-#variable de usuarios a crear
-NUM_USUARIOS = 5
 
 # La fecha inicial es hace 30 días
 FECHA_INICIAL = datetime.now() - timedelta(days=30)
@@ -269,11 +267,7 @@ def crear_indices_mongo(db):
     db.configuraciones.create_index({ "id_dispositivo": 1 })
 
 #funcion para poblar base de datos
-def poblar_mongodb(db):
-    usuarios_collection = db["usuarios"]
-    casas_collection = db["casas"]
-    dispositivos_collection = db["dispositivos"]
-    configuraciones_collection = db["configuraciones"]
+def poblar_mongodb(db, usuarios_collection, casas_collection, dispositivos_collection, configuraciones_collection):
     generador_usuarios_casas(usuarios_collection, casas_collection, dispositivos_collection, configuraciones_collection)
     crear_indices_mongo(db)
 
@@ -287,17 +281,13 @@ def generar_datos_mongodb():
     casas_collection = db["casas"]
     dispositivos_collection = db["dispositivos"]
     configuraciones_collection = db["configuraciones"]
-
-    return generador(usuarios_collection, casas_collection, dispositivos_collection, configuraciones_collection)
-    #1) generar session con get_session y database
-    session = get_session()
-    db = get_database(session)
-    #2) poblar base de datos de mongo 
-    poblar_mongodb(db)
-    #3) llamar a get_x con sufijo a dispsoitivos. Regresa json de todos los dispositivos en base de datos
-    #4) crear un mongo_dispositivos.csv con campos: id_dispositivo, "tipo_dispositivo, "id_casa)
+    return poblar_mongodb(db, usuarios_collection, casas_collection, dispositivos_collection, configuraciones_collection)
+    
+    
     
 def export_data_mongodb(session):
+    #3) llamar a get_x con sufijo a dispsoitivos. Regresa json de todos los dispositivos en base de datos
+    #4) crear un mongo_dispositivos.csv con campos: id_dispositivo, "tipo_dispositivo, "id_casa)
    dispositivos = get_x("/dispositivos", )
    with open("mongo_dispositivos.csv", mode="w", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
