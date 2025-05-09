@@ -1,6 +1,9 @@
 import Conexion.mongo_queries
+import json
+from Conexion.dgraph_connection import DgraphConnection
+from Conexion.dgraph_loader import load_data_to_dgraph
 import Conexion.dgraph_queries
-
+import os
 
 def set_username():
     username = input('Ingresa tu username: ')
@@ -240,10 +243,18 @@ def main():
     username = set_username()
 
     while(True):
+        # Hay que iniciar las bases de datos antes de empezar a manejarlas
+        dgraph_client = DgraphConnection.initialize_dgraph()
+
         print_menu()
         option = int(input('Ingresa una opción: '))
         if option == 0:
             #poblar bases de datos
+
+            # Dgraph
+            base_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dataGen')
+            connection = DgraphConnection()
+            uids = load_data_to_dgraph(base_path, connection) # Cargar los datos
             ...
         if option == 1:
             Conexion.mongo_queries.get_usuario_info(username)
@@ -264,10 +275,9 @@ def main():
             select_opc_menu_configuraciones(id_casa, option_conf)
         if option == 5:
             print("Menú de relaciones de dispositivos\n")
-            #mostrar menu de dgraph
-            #print_dgraph_menu()
-            #option_dgraph = int(input('Ingresa una opción: '))
-            #select_opc_menu_relaciones(option_dgraph)
+            print_dgraph_menu()
+            option_dgraph = int(input('Ingresa una opción: '))
+            select_opc_menu_relaciones(option_dgraph)
             ...
         if option == 6:
             username = set_username()
