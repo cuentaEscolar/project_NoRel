@@ -1,8 +1,3 @@
-# Abrir la consola de VSCode en el directorio 'dataGen' y ejecutar el comando:
-# python generator.py
-# De esta manera, los archivos se guardarán en el directorio donde está este código
-# Si se hace click en el botón de ejecutar de VSCode, los archivos se guardarán en el directorio raíz de VSCode
-# Y tendrán que ser copiados a la carpeta correcta
 #python -m dataGen.generator
 import csv
 # Generamos muchos datos aleatorios, esto es muy necesario para el proyecto
@@ -27,7 +22,8 @@ from Conexion.dgraph_loader import load_data_to_dgraph # Carga de datos a Dgraph
 
 # De esta variable depende el número de datos creados
 #
-NUM_USUARIOS = 20
+
+NUM_USUARIOS = 3
 
 # La fecha inicial es hace 30 días
 FECHA_INICIAL = datetime.now() - timedelta(days=30)
@@ -297,7 +293,7 @@ def export_data_mongodb():
     #3) llamar a get_x con sufijo a dispsoitivos. Regresa json de todos los dispositivos en base de datos
     #4) crear un mongo_dispositivos.csv con campos: id_dispositivo, "tipo_dispositivo, "id_casa)
    dispositivos = get_x("/dispositivos", )
-   with open("mongo_dispositivos.csv", mode="w", newline="", encoding="utf-8") as file:
+   with open("dataGen/mongo_dispositivos.csv", mode="w", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
         writer.writerow(["id_dispositivo", "tipo_dispositivo", "id_casa", "estado"])
         for dispositivo in dispositivos:
@@ -319,10 +315,10 @@ def generar_datos_dgraph():
     """
     
     # Crear archivos CSV con sus encabezados
-    with open("dgraph_casas.csv", "w", newline="", encoding="utf-8") as f_casas, \
-         open("dgraph_dispositivos.csv", "w", newline="", encoding="utf-8") as f_disp, \
-         open("dgraph_clusters.csv", "w", newline="", encoding="utf-8") as f_clusters, \
-         open("dgraph_relaciones.csv", "w", newline="", encoding="utf-8") as f_rel:
+    with open("dataGen/dgraph_casas.csv", "w", newline="", encoding="utf-8") as f_casas, \
+         open("dataGen/dgraph_dispositivos.csv", "w", newline="", encoding="utf-8") as f_disp, \
+         open("dataGen/dgraph_clusters.csv", "w", newline="", encoding="utf-8") as f_clusters, \
+         open("dataGen/dgraph_relaciones.csv", "w", newline="", encoding="utf-8") as f_rel:
         
         # Definir los escritores CSV
         writer_casas = csv.writer(f_casas)
@@ -339,7 +335,7 @@ def generar_datos_dgraph():
         
         # Leer dispositivos existentes del archivo MongoDB
         dispositivos = []
-        with open("mongo_dispositivos.csv", "r", newline="", encoding="utf-8") as f_mongo_disp:
+        with open("dataGen/mongo_dispositivos.csv", "r", newline="", encoding="utf-8") as f_mongo_disp:
             reader = csv.DictReader(f_mongo_disp)
             for row in reader:
                 dispositivos.append((row["id_dispositivo"], row["tipo_dispositivo"], row["id_casa"]))
@@ -486,23 +482,20 @@ def emit_cassandra_data_from_csv(the_csv, f):
     dispositivos = load_csv_devices(the_csv)
     fecha_actual = FECHA_INICIAL
     while fecha_actual <= FECHA_FINAL:
-        for device in dispositivos:
+        print(len(dispositivos))
+        l = len(dispositivos)
+        for i, device in enumerate(dispositivos):
+            print(f"{i}/{l}")
             for log in cassandra_log(fecha_actual, device):
                 f(log)
+
         fecha_actual += timedelta(days=1)
+        print(fecha_actual)
 
 def generar_datos_cassandra():
     cassandra_session = cassandra_model.get_session()
-    cassandra_model.test_session(cassandra_session)
-    emit_cassandra_data_from_csv("../dataGen/mongodb_dispositivos.csv", cassandra_model.insert_data(cassandra_session)  )
-
-    # Lee los dispositivos del archivo para MongoDB para mantener consistencia
-    with open("cassandra_logs.csv", "w", newline="", encoding="utf-8") as f:
-
-        writer = csv.writer(f)
-        writer.writerow([ "account", "device_type", "log_date", "device", 
-            "unit", "value", "comment" ])
-        emit_cassandra_data_from_csv("mongo_dispositivos.csv", writer.writerow)
+    emit_cassandra_data_from_csv("dataGen/mongo_dispositivos.csv", cassandra_model.insert_data(cassandra_session)  )
+ 
     print("Datos para Cassandra generados correctamente.")
     
 # Función principal
@@ -512,6 +505,7 @@ def main():
     generar_datos_mongodb()
     export_data_mongodb() #generar csv necesarios para dgraph y cassandra
     generar_datos_dgraph()
+    print("hola")
     generar_datos_cassandra()
   
     print("\nProceso completado.")
