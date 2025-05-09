@@ -15,7 +15,7 @@ from Conexion.printing_cassandra_utils import coerce_to_string
 from Conexion.mongo_gets import get_x
 from Conexion.mongo_model import get_session
 
-from uuid import UUID 
+from uuid import UUID, uuid5, NAMESPACE_DNS
 import os
 import uuid
 import json  # Generamos JSON en vez de CSV para Dgraph
@@ -469,7 +469,8 @@ def cassandra_log(timestamp, device):
     functions_per_unit["hora_apertura"] = lambda : gen_random_timestamp(timestamp)
     functions_per_unit['kWh'] = lambda : generar_consumo_energia_aleatorio(device['device_type'])
     result = []
-    print_ret = (lambda x: (print(x), UUID.fromString(x.toString()))[1])
+    print_ret = lambda x: (x, uuid5(NAMESPACE_DNS, str(x)))[1]
+    #print_ret = (lambda x: (print(x), UUID(str(x)))[1])
     for unit in units_per_device_type[device["device_type"]]:
         result.append (( device["account"], device['device_type'], uuid_from_time(gen_random_timestamp(timestamp)), 
                         print_ret(device['device_uuid']), unit, coerce_to_string(functions_per_unit[unit]()), '') )
