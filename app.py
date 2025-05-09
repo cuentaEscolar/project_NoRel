@@ -249,14 +249,14 @@ def select_opc_menu_configuraciones(id_casa, option_conf):
 def main():
     #ingresar username para poder usar la app
     username = set_username()
-    #mongo_session =  mm.get_session()
-    #cassandra_session = cm.get_session()
+    mongo_session =  mm.get_session()
+    cassandra_session = cm.get_session()
     dgraph_session = dc.DgraphConnection.initialize_dgraph()
 
-    #print(mongo_session)
-    #print(cassandra_session)
+    print(mongo_session)
+    print(cassandra_session)
     print(dgraph_session)
-    #return
+    return
 
 
     while(True):
