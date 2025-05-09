@@ -102,61 +102,61 @@ def select_opc_menu_relaciones(client, option):
     if option == 1:
         # Dipositivos de una casa
         casa_id = input("Ingresa el id de la casa: ")
-        print_query_result("Dispositivos en Casa", conexion.dgraph_queries.dispositivos_en_casa(client, casa_id))
+        print_dgraph_query_result("Dispositivos en Casa", dq.dispositivos_en_casa(client, casa_id))
     if option == 2:
         # Aires acondicionados de una casa
         casa_id = input("Ingresa el id de la casa: ")
-        print_query_result("Aires Acondicionados", conexion.dgraph_queries.aires_acondicionados(client, casa_id))
+        print_dgraph_query_result("Aires Acondicionados", dq.aires_acondicionados(client, casa_id))
     if option == 3:
         # Bombillas de una casa
         casa_id = input("Ingresa el id de la casa: ")
-        print_query_result("Bombillas", conexion.dgraph_queries.bombillas(client, casa_id))
+        print_dgraph_query_result("Bombillas", dq.bombillas(client, casa_id))
     if option == 4:
         # Aspiradoras de una casa
         casa_id = input("Ingresa el id de la casa: ")
-        print_query_result("Aspiradoras", conexion.dgraph_queries.aspiradoras(client, casa_id))
+        print_dgraph_query_result("Aspiradoras", dq.aspiradoras(client, casa_id))
     if option == 5:
         # Refrigeradores de una casa
         casa_id = input("Ingresa el id de la casa: ")
-        print_query_result("Refrigeradores", conexion.dgraph_queries.refrigeradores(client, casa_id))
+        print_dgraph_query_result("Refrigeradores", dq.refrigeradores(client, casa_id))
     if option == 6:
         # Cerraduras de una casa
         casa_id = input("Ingresa el id de la casa: ")
-        print_query_result("Cerraduras", conexion.dgraph_queries.cerraduras(client, casa_id))
+        print_dgraph_query_result("Cerraduras", dq.cerraduras(client, casa_id))
     if option == 7:
         # Dipositivos encendidos
         casa_id = input("Ingresa el id de la casa: ")
-        print_query_result("Dispositivos Encendidos", conexion.dgraph_queries.dispositivos_encendidos(client, casa_id))
+        print_dgraph_query_result("Dispositivos Encendidos", dq.dispositivos_encendidos(client, casa_id))
     if option == 8:
         # Dispositivos apagados
         casa_id = input("Ingresa el id de la casa: ")
-        print_query_result("Dispositivos Apagados", conexion.dgraph_queries.dispositivos_apagados(client, casa_id))
+        print_dgraph_query_result("Dispositivos Apagados", dq.dispositivos_apagados(client, casa_id))
     if option == 9:
         # Dispositivos en modo eco
         casa_id = input("Ingresa el id de la casa: ")
-        print_query_result("Dispositivos en Modo Eco", conexion.dgraph_queries.dispositivos_modo_eco(client, casa_id)) 
+        print_dgraph_query_result("Dispositivos en Modo Eco", dq.dispositivos_modo_eco(client, casa_id)) 
     if option == 10:
         # Dispositivos en estado de error
         casa_id = input("Ingresa el id de la casa: ")
-        print_query_result("Dispositivos con Error", conexion.dgraph_queries.dispositivos_con_error(client, casa_id)) 
+        print_dgraph_query_result("Dispositivos con Error", dq.dispositivos_con_error(client, casa_id)) 
     if option == 11:
         # Dispositivos en standy
         casa_id = input("Ingresa el id de la casa: ")
-        print_query_result("Dispositivos en Standby", conexion.dgraph_queries.dispositivos_en_standby(client, casa_id))
+        print_dgraph_query_result("Dispositivos en Standby", dq.dispositivos_en_standby(client, casa_id))
     if option == 12:
         # Dispositivos en habitación
         casa_id = input("Ingresa el id de la casa: ")
         habitacion = input("Ingresa el nombre de la habitación: ")
-        print_query_result("Dispositivos por Habitación", conexion.dgraph_queries.dispositivos_por_habitacion(client, casa_id, habitacion_prueba))
+        print_dgraph_query_result("Dispositivos por Habitación", dq.dispositivos_por_habitacion(client, casa_id, habitacion_prueba))
     if option == 13:
         # Dispositivos sincronizados entre sí
         casa_id = input("Ingresa el id de la casa: ")
-        print_query_result("Dispositivos Sincronizados", conexion.dgraph_queries.dispositivos_sincronizados(client, casa_id))
+        print_dgraph_query_result("Dispositivos Sincronizados", dq.dispositivos_sincronizados(client, casa_id))
     if option == 14:
         # Dispositivos en cluster funcional
         casa_id = input("Ingresa el id de la casa: ")
         tipo_funcional = input("Ingresa el tipo de cluster funcional (ej: Climatización, Seguridad, etc): ")
-        print_query_result("Dispositivos por Cluster Funcional", conexion.dgraph_queries.dispositivos_cluster_funcional(client, casa_id, tipo_funcional))
+        print_dgraph_query_result("Dispositivos por Cluster Funcional", dq.dispositivos_cluster_funcional(client, casa_id, tipo_funcional))
 
 def print_opcion_dispositivos():
     options = {
@@ -250,9 +250,8 @@ def main():
     username = set_username()
     mongo_session =  mm.get_session()
     cassandra_session = cm.get_session()
-    dgraph_session =  dc.DgraphConnection()
+    dgraph_session = dc.DgraphConnection.initialize_dgraph()
 
-    dgraph_session.connect()
     print(mongo_session)
     print(cassandra_session)
     print(dgraph_session)
@@ -260,8 +259,6 @@ def main():
 
 
     while(True):
-        # Hay que iniciar las bases de datos antes de empezar a manejarlas
-        dgraph_client = DgraphConnection.initialize_dgraph()
 
         print_menu()
         option = int(input('Ingresa una opción: '))
@@ -293,8 +290,8 @@ def main():
         if option == 5:
             print("Menú de relaciones de dispositivos\n")
             print_dgraph_menu()
-            option_dgraph = int(input('Ingresa una opción: '))
-            select_opc_menu_relaciones(option_dgraph)
+            option = int(input('Ingresa una opción: '))
+            select_opc_menu_relaciones(dgraph_session, option)
             ...
         if option == 6:
             username = set_username()
