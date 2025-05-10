@@ -256,7 +256,6 @@ def main():
     print(mongo_session)
     print(cassandra_session)
     print(dgraph_session)
-    return
 
 
     while(True):
