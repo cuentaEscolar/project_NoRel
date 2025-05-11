@@ -4,7 +4,6 @@ import Conexion.cassandra_model as cm
 import Conexion.dgraph_queries as dq
 import Conexion.dgraph_connection as dc
 
-import Conexion.mongo_queries
 import json
 from Conexion.dgraph_connection import DgraphConnection
 from Conexion.dgraph_loader import load_data_to_dgraph
@@ -43,14 +42,14 @@ def make_menu(options):
             print('    ', key + 1, '--', options[key])
     return _h_
 
-def print_mongo_menu():
-    pass
 def print_mongo_menu_dispositivos():
     options = {
         1: "Mostrar cantidad de dispositivos",
         2: "Buscar dispositivos por nombre",
         3: "Buscar dispositivos por tipo y estado",
-        4: "Buscar dispositivos por fecha de instalación"
+        4: "Buscar dispositivos por fecha de instalación",
+        5: "Cambiar casa",
+        6: "Regresar a menú principal"
     }
     for key in options.keys():
         print('    ', key, '--', options[key])
@@ -63,7 +62,9 @@ def print_mongo_menu_configuraciones():
         4: "Buscar configuraciones por hora de encendido",
         5: "Buscar configuraciones por tipo de dispositivo",
         6: "Buscar configuraciones por fecha de modificación",
-        7: "Buscar configuraciones por estado" 
+        7: "Buscar configuraciones por estado",
+        8: "Cambiar casa",
+        9: "Regresar a menú principal"
     }
     for key in options.keys():
         print('    ', key, '--', options[key])
@@ -197,54 +198,54 @@ def select_opc_menu_dispositivos(id_casa, option_disp):
         print_opcion_dispositivos()
         tipo_op = input("Ingresa un tipo de dispositivo (Enter para omitir): ")
         tipo = select_tipo_dispositivo(tipo_op)
-        Conexion.mongo_queries.get_cantidad_dispositivos_por_tipo(id_casa, tipo)
+        mq.get_cantidad_dispositivos_por_tipo(id_casa, tipo)
     if option_disp == 2:
         #"Buscar dispositivos por nombre"
         nombre_dispositivo = input("Ingresa el nombre del dispositivo: ")
-        Conexion.mongo_queries.get_dispositivo_por_nombre(id_casa, nombre_dispositivo)
+        mq.get_dispositivo_por_nombre(id_casa, nombre_dispositivo)
     if option_disp == 3:
         #"Buscar dispositivos por tipo y estado"
         print_opcion_dispositivos()
         tipo_op = input("Ingresa un tipo de dispositivo (ENTER para OMITIR): ")
         tipo = select_tipo_dispositivo(tipo_op)
         estado = input("Ingresar estado (activo o desactivo). ENTER para OMITIR: ")
-        Conexion.mongo_queries.get_dispositivo_por_tipo_estado(id_casa, tipo, estado)
+        mq.get_dispositivo_por_tipo_estado(id_casa, tipo, estado)
     if option_disp == 4:
         #"Buscar dispositivos por fecha de instalación"
         fecha_instalacion = input("Ingresa fecha (ejem: 2024-06-01): ")
-        Conexion.mongo_queries.get_dispositivo_por_fecha_intalacion(id_casa, fecha_instalacion)
+        mq.get_dispositivo_por_fecha_intalacion(id_casa, fecha_instalacion)
 
 def select_opc_menu_configuraciones(id_casa, option_conf):
     if option_conf == 1:
         #"Buscar configuraciones de un dispositivo"
         id_dispositivo = input("Ingresar id de dispositivo: ")
-        Conexion.mongo_queries.get_configuraciones_por_dispositivo(id_dispositivo)
+        mq.get_configuraciones_por_dispositivo(id_dispositivo)
     if option_conf == 2:
         #"Buscar configuraciones por nombre",
         nombre_config = input("Ingresa nombre de configuración: ")
-        Conexion.mongo_queries.get_config_por_nombre(id_casa, nombre_config)
+        mq.get_config_por_nombre(id_casa, nombre_config)
     if option_conf == 3:
         #"Buscar configuraciones por id",
         config_id = input("Ingresar id de configuración: ")
-        Conexion.mongo_queries.get_configuracion_completa(config_id)
+        mq.get_configuracion_completa(config_id)
     if option_conf == 4:
         #"Buscar configuraciones por hora de encendido",
         hora_on = input("Ingresa hora de encendido (ejem: 19:00): ")
-        Conexion.mongo_queries.get_config_por_hora_on(id_casa, hora_on)
+        mq.get_config_por_hora_on(id_casa, hora_on)
     if option_conf == 5:
         #"Buscar configuraciones por tipo de dispositivo",
         print_opcion_dispositivos()
         tipo_op = input("Ingresa un tipo de dispositivo (Enter para omitir): ")
         tipo = select_tipo_dispositivo(tipo_op)
-        Conexion.mongo_queries.get_configuracion_por_tipo(id_casa, tipo)
+        mq.get_configuracion_por_tipo(id_casa, tipo)
     if option_conf == 6:
         #"Buscar configuraciones por fecha de modificación",
         fecha_modificacion = input("Ingresa fecha (ejem: 2024-06-01): ")
-        Conexion.mongo_queries.get_config_por_fecha_modificacion(id_casa, fecha_modificacion)
+        mq.get_config_por_fecha_modificacion(id_casa, fecha_modificacion)
     if option_conf == 7:
         #"Buscar configuraciones por estado" 
         estado_config = input("Ingresar estado (activo o desactivo). ENTER para OMITIR: ")
-        Conexion.mongo_queries.get_config_por_estado(id_casa, estado_config)
+        mq.get_config_por_estado(id_casa, estado_config)
 
 def main():
     #ingresar username para poder usar la app
@@ -271,22 +272,40 @@ def main():
             print("Datos subidos a DGraph")
             ...
         if option == 1:
-            Conexion.mongo_queries.get_usuario_info(username)
+            mq.get_usuario_info(username)
         if option == 2:
             #mostrar menu de Cassandra
             ...
         if option == 3:
             num_casa = set_num_casa()
-            id_casa = Conexion.mongo_queries.get_id_casa(num_casa)
-            print_mongo_menu_dispositivos()
-            option_disp = int(input('Ingresa una opción: '))
-            select_opc_menu_dispositivos(id_casa, option_disp)
+            id_casa = mq.get_id_casa(num_casa)
+            while True:
+                print_mongo_menu_dispositivos()
+                option_disp = int(input('Ingresa una opción: '))
+                if option_disp == 5:
+                    # Cambiar casa
+                    num_casa = set_num_casa()
+                    id_casa = mq.get_id_casa(num_casa)
+                elif option_disp == 6:
+                    # Regresar a menú principal
+                    break
+                else:
+                    select_opc_menu_dispositivos(id_casa, option_disp)
         if option == 4:
             num_casa = set_num_casa()
-            id_casa = Conexion.mongo_queries.get_id_casa(num_casa)
-            print_mongo_menu_configuraciones()
-            option_conf = int(input('Ingresa una opción: '))
-            select_opc_menu_configuraciones(id_casa, option_conf)
+            id_casa = mq.get_id_casa(num_casa)
+            while True:
+                print_mongo_menu_configuraciones()
+                option_conf = int(input('Ingresa una opción: '))
+                if option_conf == 8:
+                    # Cambiar casa
+                    num_casa = set_num_casa()
+                    id_casa = mq.get_id_casa(num_casa)
+                elif option_conf == 9:
+                    # Regresar a menú principal
+                    break
+                else:
+                    select_opc_menu_configuraciones(id_casa, option_conf)
         if option == 5:
             while (True):
                 print("Menú de relaciones de dispositivos\n")
@@ -295,7 +314,6 @@ def main():
                 if option == 15:
                     break
                 select_opc_menu_relaciones(dgraph_session, option)
-            ...
         if option == 6:
             username = set_username()
         if option == 7:
