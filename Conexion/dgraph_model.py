@@ -43,7 +43,7 @@ def set_schema(client):
         ruta: string .
         nombre: string @index(exact) .
         tipo: string @index(hash) .
-        id_casa: int @index(int) .
+        id_casa: string @index(exact) .
         sincroniza_con: [uid] @reverse .
         tiene_dispositivos: [uid] @reverse .
         contiene_dispositivos: [uid] @reverse .

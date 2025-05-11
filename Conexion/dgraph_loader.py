@@ -13,6 +13,7 @@ def load_casas(client, file_path):
     Carga los datos de las casas desde el CSV
     Retorna: diccionario con los UIDs asignados {id_casa: uid}
     """
+
     txn = client.txn()
     resp = None
     try:
@@ -23,7 +24,7 @@ def load_casas(client, file_path):
                 casas.append({
                     'uid': '_:' + row['id_casa'],
                     'dgraph.type': 'Casa',
-                    'id_casa': int(row['id_casa'].split('_')[1]),  # Extraer número de "casa_X"
+                    'id_casa': row['id_casa'], # Tratando esta cosa como string para que no colapse todo lo demás
                     'nombre': row['nombre']
                 })
         logger.info(f"Cargando {len(casas)} casas")
