@@ -23,10 +23,11 @@ from Conexion.dgraph_loader import load_data_to_dgraph # Carga de datos a Dgraph
 # De esta variable depende el número de datos creados
 #
 
-NUM_USUARIOS = 3
+DAYS = 3
+NUM_USUARIOS = 1
 
 # La fecha inicial es hace 30 días
-FECHA_INICIAL = datetime.now() - timedelta(days=30)
+FECHA_INICIAL = datetime.now() - timedelta(days=3)
 # La fecha final es ahora mismo
 FECHA_FINAL = datetime.now()
 
