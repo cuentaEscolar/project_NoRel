@@ -289,17 +289,16 @@ def dispositivos_sincronizados(client, casa_id):
     res = client.txn(read_only=True).query(query, variables=variables)
     return json.loads(res.json)
 
-# 14.- Los usuarios deben poder filtrar los dispositivos que están en el mismo cluster funcional.
-def dispositivos_cluster_funcional(client, casa_id, tipo_funcional):
+# 14.- Los usuarios deben poder ver los clusters de una casa (tanto funcionales como de habitación)
+def clusters(client, casa_id):
     """
-    Los usuarios deben poder filtrar los dispositivos que están en el mismo cluster funcional.
+    Los usuarios deben poder filtrar todos los clusters de una casa
     """
-    query = """query clusters_casa($casa_id: string) {
+    query = """query clusters($casa_id: string) {
         casa(func: eq(id_casa, $casa_id)) {
             id_casa
             nombre
-            clusters: ~pertenece_a @filter(eq(categoria, "funcional")) {
-                uid
+            clusters: ~pertenece_a {
                 tipo
                 categoria
                 nombre
@@ -308,5 +307,34 @@ def dispositivos_cluster_funcional(client, casa_id, tipo_funcional):
     }"""
     
     variables = {'$casa_id': casa_id}
+    res = client.txn(read_only=True).query(query, variables=variables)
+    return json.loads(res.json)
+
+# 15.- Los usuarios deben poder filtrar los dispositivos que están en el mismo cluster funcional.
+def dispositivos_cluster_funcional(client, casa_id, tipo_funcional):
+    """
+    Los usuarios deben poder filtrar los dispositivos que están en el mismo cluster funcional.
+    """
+    query = """query clusters_casa($casa_id: string, $tipo_funcional: string) {
+        casa(func: eq(id_casa, $casa_id)) {
+            id_casa
+            nombre
+            clusters: ~pertenece_a @filter(eq(tipo, $tipo_funcional)) {
+                tipo
+                categoria
+                nombre
+                disps: agrupa_dispositivos {
+                    id_dispositivo
+                    categoria
+                    estado
+                    ubicacion
+                    temperatura
+                    modo
+                }
+            }
+        }
+    }"""
+    
+    variables = {'$casa_id': casa_id, '$tipo_funcional': tipo_funcional}
     res = client.txn(read_only=True).query(query, variables=variables)
     return json.loads(res.json)
