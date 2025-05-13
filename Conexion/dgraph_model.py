@@ -29,6 +29,7 @@ def set_schema(client):
             nombre
             contiene_dispositivos: [Device]
             agrupa_dispositivos: [Device]
+            pertenece_a: [Casa]
         }
 
         id_dispositivo: string @index(exact) .
@@ -41,13 +42,14 @@ def set_schema(client):
         color: string @index(exact) .
         potencia: int .
         ruta: string .
-        nombre: string @index(exact) .
+        nombre: string @index(term) .
         tipo: string @index(hash) .
-        id_casa: int @index(int) .
+        id_casa: string @index(exact) .
         sincroniza_con: [uid] @reverse .
         tiene_dispositivos: [uid] @reverse .
         contiene_dispositivos: [uid] @reverse .
         agrupa_dispositivos: [uid] @reverse .
+        pertenece_a: [uid] @reverse .
         """
         
         operation = pydgraph.Operation(schema=schema)

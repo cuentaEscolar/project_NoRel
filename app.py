@@ -5,7 +5,6 @@ import Conexion.dgraph_queries as dq
 import Conexion.dgraph_connection as dc
 import Conexion.printing_utils as pu
 
-import Conexion.mongo_queries
 import json
 from Conexion.dgraph_connection import DgraphConnection
 from Conexion.dgraph_loader import load_data_to_dgraph
@@ -55,14 +54,14 @@ def make_menu(options):
             print('    ', key + 1, '--', options[key])
     return _h_
 
-def print_mongo_menu():
-    pass
 def print_mongo_menu_dispositivos():
     options = {
         1: "Mostrar cantidad de dispositivos",
         2: "Buscar dispositivos por nombre",
         3: "Buscar dispositivos por tipo y estado",
-        4: "Buscar dispositivos por fecha de instalación"
+        4: "Buscar dispositivos por fecha de instalación",
+        5: "Cambiar casa",
+        6: "Regresar a menú principal"
     }
     for key in options.keys():
         print('    ', key, '--', options[key])
@@ -75,7 +74,9 @@ def print_mongo_menu_configuraciones():
         4: "Buscar configuraciones por hora de encendido",
         5: "Buscar configuraciones por tipo de dispositivo",
         6: "Buscar configuraciones por fecha de modificación",
-        7: "Buscar configuraciones por estado" 
+        7: "Buscar configuraciones por estado",
+        8: "Cambiar casa",
+        9: "Regresar a menú principal"
     }
     for key in options.keys():
         print('    ', key, '--', options[key])
@@ -114,61 +115,63 @@ def print_dgraph_query_result(query_name, result):
 def select_opc_menu_relaciones(client, option):
     if option == 1:
         # Dipositivos de una casa
-        casa_id = input("Ingresa el id de la casa: ")
+        casa_id = 'casa_'+(input("Ingresa el id de la casa: "))
         print_dgraph_query_result("Dispositivos en Casa", dq.dispositivos_en_casa(client, casa_id))
     if option == 2:
         # Aires acondicionados de una casa
-        casa_id = input("Ingresa el id de la casa: ")
+        casa_id = 'casa_'+(input("Ingresa el id de la casa: "))
         print_dgraph_query_result("Aires Acondicionados", dq.aires_acondicionados(client, casa_id))
     if option == 3:
         # Bombillas de una casa
-        casa_id = input("Ingresa el id de la casa: ")
+        casa_id = 'casa_'+(input("Ingresa el id de la casa: "))
         print_dgraph_query_result("Bombillas", dq.bombillas(client, casa_id))
     if option == 4:
         # Aspiradoras de una casa
-        casa_id = input("Ingresa el id de la casa: ")
+        casa_id = 'casa_'+(input("Ingresa el id de la casa: "))
         print_dgraph_query_result("Aspiradoras", dq.aspiradoras(client, casa_id))
     if option == 5:
         # Refrigeradores de una casa
-        casa_id = input("Ingresa el id de la casa: ")
+        casa_id = 'casa_'+(input("Ingresa el id de la casa: "))
         print_dgraph_query_result("Refrigeradores", dq.refrigeradores(client, casa_id))
     if option == 6:
         # Cerraduras de una casa
-        casa_id = input("Ingresa el id de la casa: ")
+        casa_id = 'casa_'+(input("Ingresa el id de la casa: "))
         print_dgraph_query_result("Cerraduras", dq.cerraduras(client, casa_id))
     if option == 7:
         # Dipositivos encendidos
-        casa_id = input("Ingresa el id de la casa: ")
+        casa_id = 'casa_'+(input("Ingresa el id de la casa: "))
         print_dgraph_query_result("Dispositivos Encendidos", dq.dispositivos_encendidos(client, casa_id))
     if option == 8:
         # Dispositivos apagados
-        casa_id = input("Ingresa el id de la casa: ")
+        casa_id = 'casa_'+(input("Ingresa el id de la casa: "))
         print_dgraph_query_result("Dispositivos Apagados", dq.dispositivos_apagados(client, casa_id))
     if option == 9:
         # Dispositivos en modo eco
-        casa_id = input("Ingresa el id de la casa: ")
+        casa_id = 'casa_'+(input("Ingresa el id de la casa: "))
         print_dgraph_query_result("Dispositivos en Modo Eco", dq.dispositivos_modo_eco(client, casa_id)) 
     if option == 10:
         # Dispositivos en estado de error
-        casa_id = input("Ingresa el id de la casa: ")
+        casa_id = 'casa_'+(input("Ingresa el id de la casa: "))
         print_dgraph_query_result("Dispositivos con Error", dq.dispositivos_con_error(client, casa_id)) 
     if option == 11:
         # Dispositivos en standy
-        casa_id = input("Ingresa el id de la casa: ")
+        casa_id = 'casa_'+(input("Ingresa el id de la casa: "))
         print_dgraph_query_result("Dispositivos en Standby", dq.dispositivos_en_standby(client, casa_id))
     if option == 12:
         # Dispositivos en habitación
-        casa_id = input("Ingresa el id de la casa: ")
+        casa_id = 'casa_'+(input("Ingresa el id de la casa: "))
         habitacion = input("Ingresa el nombre de la habitación: ")
         print_dgraph_query_result("Dispositivos por Habitación", dq.dispositivos_por_habitacion(client, casa_id, habitacion))
     if option == 13:
         # Dispositivos sincronizados entre sí
-        casa_id = input("Ingresa el id de la casa: ")
+        casa_id = 'casa_'+(input("Ingresa el id de la casa: "))
         print_dgraph_query_result("Dispositivos Sincronizados", dq.dispositivos_sincronizados(client, casa_id))
     if option == 14:
         # Dispositivos en cluster funcional
         casa_id = input("Ingresa el id de la casa: ")
+        print(casa_id)
         tipo_funcional = input("Ingresa el tipo de cluster funcional (ej: Climatización, Seguridad, etc): ")
+        print(tipo_funcional)
         print_dgraph_query_result("Dispositivos por Cluster Funcional", dq.dispositivos_cluster_funcional(client, casa_id, tipo_funcional))
 
 def print_opcion_dispositivos():
@@ -209,54 +212,54 @@ def select_opc_menu_dispositivos(id_casa, option_disp):
         print_opcion_dispositivos()
         tipo_op = input("Ingresa un tipo de dispositivo (Enter para omitir): ")
         tipo = select_tipo_dispositivo(tipo_op)
-        Conexion.mongo_queries.get_cantidad_dispositivos_por_tipo(id_casa, tipo)
+        mq.get_cantidad_dispositivos_por_tipo(id_casa, tipo)
     if option_disp == 2:
         #"Buscar dispositivos por nombre"
         nombre_dispositivo = input("Ingresa el nombre del dispositivo: ")
-        Conexion.mongo_queries.get_dispositivo_por_nombre(id_casa, nombre_dispositivo)
+        mq.get_dispositivo_por_nombre(id_casa, nombre_dispositivo)
     if option_disp == 3:
         #"Buscar dispositivos por tipo y estado"
         print_opcion_dispositivos()
         tipo_op = input("Ingresa un tipo de dispositivo (ENTER para OMITIR): ")
         tipo = select_tipo_dispositivo(tipo_op)
         estado = input("Ingresar estado (activo o desactivo). ENTER para OMITIR: ")
-        Conexion.mongo_queries.get_dispositivo_por_tipo_estado(id_casa, tipo, estado)
+        mq.get_dispositivo_por_tipo_estado(id_casa, tipo, estado)
     if option_disp == 4:
         #"Buscar dispositivos por fecha de instalación"
         fecha_instalacion = input("Ingresa fecha (ejem: 2024-06-01): ")
-        Conexion.mongo_queries.get_dispositivo_por_fecha_intalacion(id_casa, fecha_instalacion)
+        mq.get_dispositivo_por_fecha_intalacion(id_casa, fecha_instalacion)
 
 def select_opc_menu_configuraciones(id_casa, option_conf):
     if option_conf == 1:
         #"Buscar configuraciones de un dispositivo"
         id_dispositivo = input("Ingresar id de dispositivo: ")
-        Conexion.mongo_queries.get_configuraciones_por_dispositivo(id_dispositivo)
+        mq.get_configuraciones_por_dispositivo(id_dispositivo)
     if option_conf == 2:
         #"Buscar configuraciones por nombre",
         nombre_config = input("Ingresa nombre de configuración: ")
-        Conexion.mongo_queries.get_config_por_nombre(id_casa, nombre_config)
+        mq.get_config_por_nombre(id_casa, nombre_config)
     if option_conf == 3:
         #"Buscar configuraciones por id",
         config_id = input("Ingresar id de configuración: ")
-        Conexion.mongo_queries.get_configuracion_completa(config_id)
+        mq.get_configuracion_completa(config_id)
     if option_conf == 4:
         #"Buscar configuraciones por hora de encendido",
         hora_on = input("Ingresa hora de encendido (ejem: 19:00): ")
-        Conexion.mongo_queries.get_config_por_hora_on(id_casa, hora_on)
+        mq.get_config_por_hora_on(id_casa, hora_on)
     if option_conf == 5:
         #"Buscar configuraciones por tipo de dispositivo",
         print_opcion_dispositivos()
         tipo_op = input("Ingresa un tipo de dispositivo (Enter para omitir): ")
         tipo = select_tipo_dispositivo(tipo_op)
-        Conexion.mongo_queries.get_configuracion_por_tipo(id_casa, tipo)
+        mq.get_configuracion_por_tipo(id_casa, tipo)
     if option_conf == 6:
         #"Buscar configuraciones por fecha de modificación",
         fecha_modificacion = input("Ingresa fecha (ejem: 2024-06-01): ")
-        Conexion.mongo_queries.get_config_por_fecha_modificacion(id_casa, fecha_modificacion)
+        mq.get_config_por_fecha_modificacion(id_casa, fecha_modificacion)
     if option_conf == 7:
         #"Buscar configuraciones por estado" 
         estado_config = input("Ingresar estado (activo o desactivo). ENTER para OMITIR: ")
-        Conexion.mongo_queries.get_config_por_estado(id_casa, estado_config)
+        mq.get_config_por_estado(id_casa, estado_config)
 
 def house_selector(username):
     print("Seleccionar Casa")
@@ -366,16 +369,34 @@ def main():
             ...
         if option == 3:
             num_casa = set_num_casa()
-            id_casa = Conexion.mongo_queries.get_id_casa(num_casa)
-            print_mongo_menu_dispositivos()
-            option_disp = int(input('Ingresa una opción: '))
-            select_opc_menu_dispositivos(id_casa, option_disp)
+            id_casa = mq.get_id_casa(num_casa)
+            while True:
+                print_mongo_menu_dispositivos()
+                option_disp = int(input('Ingresa una opción: '))
+                if option_disp == 5:
+                    # Cambiar casa
+                    num_casa = set_num_casa()
+                    id_casa = mq.get_id_casa(num_casa)
+                elif option_disp == 6:
+                    # Regresar a menú principal
+                    break
+                else:
+                    select_opc_menu_dispositivos(id_casa, option_disp)
         if option == 4:
             num_casa = set_num_casa()
-            id_casa = Conexion.mongo_queries.get_id_casa(num_casa)
-            print_mongo_menu_configuraciones()
-            option_conf = int(input('Ingresa una opción: '))
-            select_opc_menu_configuraciones(id_casa, option_conf)
+            id_casa = mq.get_id_casa(num_casa)
+            while True:
+                print_mongo_menu_configuraciones()
+                option_conf = int(input('Ingresa una opción: '))
+                if option_conf == 8:
+                    # Cambiar casa
+                    num_casa = set_num_casa()
+                    id_casa = mq.get_id_casa(num_casa)
+                elif option_conf == 9:
+                    # Regresar a menú principal
+                    break
+                else:
+                    select_opc_menu_configuraciones(id_casa, option_conf)
         if option == 5:
             while (True):
                 print("Menú de relaciones de dispositivos\n")
@@ -384,7 +405,6 @@ def main():
                 if option == 15:
                     break
                 select_opc_menu_relaciones(dgraph_session, option)
-            ...
         if option == 6:
             username = set_username()
         if option == 7:

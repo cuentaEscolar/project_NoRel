@@ -309,10 +309,10 @@ def export_data_mongodb():
 def generar_datos_dgraph():
     """
     Genera archivos CSV para DGraph con la siguiente estructura (simplifica la carga de datos a Dgraph):
-    - casas.csv: Datos básicos de las casas
-    - dispositivos.csv: Información de todos los dispositivos
-    - clusters.csv: Información de los clusters
-    - relaciones.csv: Conexiones entre nodos (casa-dispositivo, cluster-dispositivo, dispositivo-dispositivo)
+    - dgraph_casas.csv: Datos básicos de las casas
+    - dgraph_dispositivos.csv: Información de todos los dispositivos
+    - dgraph_clusters.csv: Información de los clusters
+    - dgraph_relaciones.csv: Conexiones entre nodos (casa-dispositivo, cluster-dispositivo, dispositivo-dispositivo)
     """
     
     # Crear archivos CSV con sus encabezados
@@ -336,10 +336,17 @@ def generar_datos_dgraph():
         
         # Leer dispositivos existentes del archivo MongoDB
         dispositivos = []
+        casas_ids = set()  # Conjunto para almacenar los IDs de casas únicos
         with open("dataGen/mongo_dispositivos.csv", "r", newline="", encoding="utf-8") as f_mongo_disp:
             reader = csv.DictReader(f_mongo_disp)
             for row in reader:
                 dispositivos.append((row["id_dispositivo"], row["tipo_dispositivo"], row["id_casa"]))
+                casas_ids.add(row["id_casa"])  # Añadir el ID de la casa
+        
+        # Escribir las casas usando los IDs de Mongo
+        for casa_id in casas_ids:
+            casa_id_str = f"casa_{casa_id}"
+            writer_casas.writerow([casa_id_str, f"Casa {casa_id}"])
         
         # Crear diccionario para agrupar dispositivos por tipo
         dispositivos_por_tipo = {}
@@ -356,10 +363,9 @@ def generar_datos_dgraph():
             writer_casas.writerow([casa_id_str, f"Casa {casa_id}"])
             
             # Filtrar dispositivos de esta casa
-            disp_casa = [d for d in dispositivos if str(d[2]) == casa_id]
-            
-            # Escribir dispositivos y su relación con la casa
-            for id_disp, tipo_disp, _ in disp_casa:
+            disp_casa = []
+            for id_disp, tipo_disp, casa_id in dispositivos:
+                # Escribir dispositivos y su relación con la casa
                 # Generar datos específicos según el tipo de dispositivo
                 estado = generar_estado_aleatorio()
                 temp = generar_temperatura_aleatoria() if tipo_disp in ["aire_acondicionado", "refrigerador"] else ""
@@ -375,7 +381,10 @@ def generar_datos_dgraph():
                                     brillo, color, potencia, ruta])
                 
                 # Escribir relación casa-dispositivo
-                writer_rel.writerow([casa_id_str, "tiene_dispositivos", id_disp])
+                writer_rel.writerow([f"casa_{casa_id}", "tiene_dispositivos", id_disp])
+                
+                if casa_id == str(casa_id):  # Si el dispositivo pertenece a esta casa
+                    disp_casa.append((id_disp, tipo_disp, casa_id))
             
             # Generar clusters por habitación
             habitaciones = ["sala", "cocina", "dormitorio_principal", "baño"]
@@ -383,6 +392,8 @@ def generar_datos_dgraph():
                 if random.random() > 0.3:  # 70% probabilidad de tener cluster
                     cluster_id = f"cluster_{casa_id}_{hab}"
                     writer_clusters.writerow([cluster_id, "cluster", "habitacion", f"{hab.capitalize()}_{casa_id}"])
+                    
+                    writer_rel.writerow([cluster_id, "pertenece_a", f"casa_{casa_id}"])
                     
                     # Asignar dispositivos al cluster según ubicación
                     for id_disp, tipo_disp, _ in disp_casa:
@@ -396,6 +407,8 @@ def generar_datos_dgraph():
                     cluster_id = f"cluster_{casa_id}_{tipo}"
                     writer_clusters.writerow([cluster_id, "cluster", "funcional", f"{tipo.capitalize()}_{casa_id}"])
                     
+                    writer_rel.writerow([cluster_id, "pertenece_a", f"casa_{casa_id}"])
+                    
                     # Asignar dispositivos según función
                     for id_disp, tipo_disp, _ in disp_casa:
                         if ((tipo == "iluminacion" and tipo_disp == "bombilla") or
@@ -403,7 +416,7 @@ def generar_datos_dgraph():
                             (tipo == "seguridad" and tipo_disp == "cerradura")):
                             if random.random() > 0.3:  # 70% probabilidad de asignación
                                 writer_rel.writerow([cluster_id, "agrupa_dispositivos", id_disp])
-        
+
         # Generar relaciones de sincronización entre dispositivos del mismo tipo
         for tipo_disp, lista_dispositivos in dispositivos_por_tipo.items():
             # Para cada dispositivo, elegir aleatoriamente otros dispositivos del mismo tipo para sincronizar
@@ -506,7 +519,6 @@ def main():
     generar_datos_mongodb()
     export_data_mongodb() #generar csv necesarios para dgraph y cassandra
     generar_datos_dgraph()
-    print("hola")
     generar_datos_cassandra()
   
     print("\nProceso completado.")
