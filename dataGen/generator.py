@@ -393,6 +393,8 @@ def generar_datos_dgraph():
                     cluster_id = f"cluster_{casa_id}_{hab}"
                     writer_clusters.writerow([cluster_id, "cluster", "habitacion", f"{hab.capitalize()}_{casa_id}"])
                     
+                    writer_rel.writerow([cluster_id, "pertenece_a", f"casa_{casa_id}"])
+                    
                     # Asignar dispositivos al cluster según ubicación
                     for id_disp, tipo_disp, _ in disp_casa:
                         if random.random() > 0.3:  # 70% probabilidad de asignación
@@ -404,6 +406,8 @@ def generar_datos_dgraph():
                 if random.random() > 0.5:  # 50% probabilidad de tener cluster
                     cluster_id = f"cluster_{casa_id}_{tipo}"
                     writer_clusters.writerow([cluster_id, "cluster", "funcional", f"{tipo.capitalize()}_{casa_id}"])
+                    
+                    writer_rel.writerow([cluster_id, "pertenece_a", f"casa_{casa_id}"])
                     
                     # Asignar dispositivos según función
                     for id_disp, tipo_disp, _ in disp_casa:
