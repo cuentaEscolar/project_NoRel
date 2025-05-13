@@ -291,36 +291,19 @@ def dispositivos_sincronizados(client, casa_id):
 
 # 14.- Los usuarios deben poder filtrar los dispositivos que están en el mismo cluster funcional.
 def dispositivos_cluster_funcional(client, casa_id, tipo_funcional):
-    """
-    Los usuarios deben poder filtrar los dispositivos que están en el mismo cluster funcional (iluminación, climatización, etc).
-    Regresa los clusters del tipo especificado y sus dispositivos
-    """
-    query = """query dispositivos_cluster($casa_id: string, $tipo: string) {
+    query = """query clusters_casa($casa_id: string) {
         casa(func: eq(id_casa, $casa_id)) {
-            tiene_dispositivos {
-                id_dispositivo
+            id_casa
+            nombre
+            clusters: ~pertenece_a {
+                uid
+                tipo
                 categoria
-                estado
-                ubicacion
-                ~contiene_dispositivos @filter(eq(tipo, $tipo)) {
-                    tipo
-                    categoria
-                    nombre
-                    # Obtenemos todos los dispositivos del mismo cluster
-                    contiene_dispositivos {
-                        id_dispositivo
-                        categoria
-                        estado
-                        ubicacion
-                    }
-                }
+                nombre
             }
         }
     }"""
     
-    variables = {
-        '$casa_id': casa_id,
-        '$tipo': tipo_funcional
-    }
+    variables = {'$casa_id': casa_id}
     res = client.txn(read_only=True).query(query, variables=variables)
     return json.loads(res.json)

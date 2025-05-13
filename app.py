@@ -167,10 +167,8 @@ def select_opc_menu_relaciones(client, option):
         print_dgraph_query_result("Dispositivos Sincronizados", dq.dispositivos_sincronizados(client, casa_id))
     if option == 14:
         # Dispositivos en cluster funcional
-        casa_id = input("Ingresa el id de la casa: ")
-        print(casa_id)
-        tipo_funcional = input("Ingresa el tipo de cluster funcional (ej: Climatización, Seguridad, etc): ")
-        print(tipo_funcional)
+        casa_id = 'casa_'+(input("Ingresa el id de la casa: "))
+        tipo_funcional = input("Ingresa el tipo de cluster funcional (iluminacion, climatizacion, seguridad o entretenimiento): ")
         print_dgraph_query_result("Dispositivos por Cluster Funcional", dq.dispositivos_cluster_funcional(client, casa_id, tipo_funcional))
 
 def print_opcion_dispositivos():
