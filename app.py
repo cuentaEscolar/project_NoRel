@@ -14,6 +14,7 @@ import os
 from datetime import datetime
 import time
 import uuid
+import re
 
 
 def print_dict(x):
@@ -257,9 +258,6 @@ def select_opc_menu_configuraciones(id_casa, option_conf):
         estado_config = input("Ingresar estado (activo o desactivo). ENTER para OMITIR: ")
         Conexion.mongo_queries.get_config_por_estado(id_casa, estado_config)
 
-def manage_date():
-    ...
-
 def house_selector(username):
     print("Seleccionar Casa")
     user = Conexion.mongo_queries.get_usuario_info(username)
@@ -274,28 +272,62 @@ def house_selector(username):
     ...
 
 
+def manage_date():
+    print("Elegir un tipo de fecha")
+    d_menu = make_menu(f"""Ultimo mes
+Hoy
+Hace X Dias
+Par de fechas arbitrarias""".split("\n")
+    )()
+
+    ttnow = "toTimeStamp(now())"
+    option  = int(input())
+
+    if option == 1:
+        print("Datos de los ultimos 30 dias")
+        return f"{ttnow} - 30d|{ttnow}".split("|")
+
+    if option == 2:
+        print("Datos de hoy")
+        return f"{ttnow} {ttnow}".split()
+
+    if option == 3:
+        l, r = "", ""
+        pattern = r"([1-9]\d\d\d)-([01]\d)-([0-3]\d)"
+        while( not re.match(pattern, l)): 
+            l = input('Ingrese la primera fecha en el formato YYYY-MM-DD\n')
+        while( not re.match(pattern, r)): 
+            r = input('Ingrese la segunda fecha en el formato YYYY-MM-DD\n')
+        print(f"Fecha en rango {l} --> {r}")
+        #l += " 00:00:00"
+        #r += " 00:00:00"
+        return f"{pu.esc(l)}|{pu.esc(r)}+1d".split("|")
+
+
+        
+
+def adv_queries(session, username):
+    pass
 
 def menu_cassandra(session, username):
 
     get_methods = cm.create_gets(session)
     id_casa = house_selector(username)
     print("")
-    print(id_casa)
-    print(get_methods)
-    manage_date()
     c_menu = make_menu(
         f"""Mostrar todos los logs de la casa
-Buscar logs para una fecha
-Buscar logs entre un par de fechas
+Buscar logs por fecha
 Busqueda avanzada """.split("\n")
-        
     )()
     print("")
     query_type = int(input())
 
     if query_type == 1:
-        user_id = Conexion.mongo_queries.get_usuario_info(username)[0]['_id']
         pu.logs_unpacker(cm.get_all_logs(id_casa))
+    if query_type == 2:
+        d_s, d_e = manage_date()
+        pu.logs_unpacker(cm.get_log_by_a_d(id_casa, d_s, d_e))
+        
 
 
 def main():

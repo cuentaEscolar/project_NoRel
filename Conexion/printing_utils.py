@@ -83,6 +83,7 @@ def html_tagger(s):
 def tr(x): return html_tagger("tr")(x)
 def th(x): return html_tagger("th")(x)
 def td(x): return html_tagger("td")(x)
+def esc(x): return f"'{x}'"
 def tabler(x): return html_tagger("table")(x)
 
 def nice_print(arr):
