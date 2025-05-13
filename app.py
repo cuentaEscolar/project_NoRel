@@ -309,8 +309,10 @@ Par de fechas arbitrarias""".split("\n")
 
         
 
-def adv_queries(session, username):
-    pass
+def adv_queries(session, account):
+
+    d_s, d_e = manage_date()
+    
 
 def menu_cassandra(session, username):
 
@@ -327,9 +329,13 @@ Busqueda avanzada """.split("\n")
 
     if query_type == 1:
         pu.logs_unpacker(cm.get_all_logs(id_casa))
+
     if query_type == 2:
         d_s, d_e = manage_date()
         pu.logs_unpacker(cm.get_log_by_a_d(id_casa, d_s, d_e))
+
+    if query_type == 2
+        adv_queries(session, id_casa)
         
 
 
