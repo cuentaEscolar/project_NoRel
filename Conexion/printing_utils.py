@@ -18,12 +18,13 @@ def logs_unpacker(res):
 
     for log in res:
         tp = ""
-        date = datetime.utcfromtimestamp(unix_time_from_uuid1(log.log_date)).strftime('%Y-%m-%d %H:%M:%S')
+        date,time = datetime.utcfromtimestamp(unix_time_from_uuid1(log.log_date)).strftime('%Y-%m-%d %H:%M:%S').split()
         type_ = log.device_type 
         unit = log.unit
         value = log.value
         device_id = str(log.device)
         tp += "|".join([f"{date=}",
+                        f"{time=}",
                         f"type={type_}",
                         f"type={unit}",
                         f"{value=}",
@@ -82,6 +83,7 @@ def html_tagger(s):
 def tr(x): return html_tagger("tr")(x)
 def th(x): return html_tagger("th")(x)
 def td(x): return html_tagger("td")(x)
+def esc(x): return f"'{x}'"
 def tabler(x): return html_tagger("table")(x)
 
 def nice_print(arr):

@@ -182,11 +182,12 @@ def get_{}( account, d_s, d_e, {}):
     #print(d_e)
     #d_s = uuid.UUID(d_s)
     #d_e = uuid.UUID(d_e)
-    select_stmt = "SELECT * from {} where log_date >= maxTimeuuid('"+d_s+"') and log_date <= minTimeuuid('"+d_e+"') {};"
+    select_stmt = "SELECT * from {} where log_date >= maxTimeuuid("+d_s+") and log_date <= minTimeuuid("+d_e+") {};"
     #print(select_stmt)
     acc = account 
     a = account
     stmt = session.prepare(select_stmt)
+    #print(stmt)
     return session.execute(stmt, [ {}])
 """
     get_method_names = []
@@ -210,13 +211,13 @@ def get_{}( account, d_s, d_e, {}):
         
     
 def get_all_logs(account):
+
     start_dt = datetime.datetime(1970, 1, 1, 0, 0, 0)
     end_dt = datetime.datetime(2999, 9, 9, 23, 59, 59)
 
-    start_dt_str = start_dt.strftime('%Y-%m-%d %H:%M:%S')
-    end_dt_str = end_dt.strftime('%Y-%m-%d %H:%M:%S')
-    start_timestamp = int(start_dt.timestamp())  # Timestamp in seconds
-    end_timestamp = int(end_dt.timestamp())  # Timestamp in seconds
+    escaper = (lambda x : f"'{x}'")
+    start_dt_str = escaper(start_dt.strftime('%Y-%m-%d %H:%M:%S'))
+    end_dt_str = escaper(end_dt.strftime('%Y-%m-%d %H:%M:%S'))
     return get_log_by_a_d(account, start_dt_str, end_dt_str)
 
 def get_session():
