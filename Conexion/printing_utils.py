@@ -18,12 +18,13 @@ def logs_unpacker(res):
 
     for log in res:
         tp = ""
-        date = datetime.utcfromtimestamp(unix_time_from_uuid1(log.log_date)).strftime('%Y-%m-%d %H:%M:%S')
+        date,time = datetime.utcfromtimestamp(unix_time_from_uuid1(log.log_date)).strftime('%Y-%m-%d %H:%M:%S').split()
         type_ = log.device_type 
         unit = log.unit
         value = log.value
         device_id = str(log.device)
         tp += "|".join([f"{date=}",
+                        f"{time=}",
                         f"type={type_}",
                         f"type={unit}",
                         f"{value=}",
