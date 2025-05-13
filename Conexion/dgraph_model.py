@@ -41,7 +41,7 @@ def set_schema(client):
         color: string @index(exact) .
         potencia: int .
         ruta: string .
-        nombre: string @index(exact) .
+        nombre: string @index(term) .
         tipo: string @index(hash) .
         id_casa: string @index(exact) .
         sincroniza_con: [uid] @reverse .
