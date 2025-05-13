@@ -6,7 +6,7 @@ import random
 import uuid
 import inspect
 from cassandra.cluster import Cluster
-import Conexion.printing_cassandra_utils as pc
+import Conexion.printing_utils as pc
 import cassandra
 
 """
@@ -178,23 +178,22 @@ def get_{}( account, d_s, d_e, {}):
     iot is plenty insecure as is 
     d can be a range date so it should be passed as a string
     '''
+    #print(d_s)
+    #print(d_e)
     #d_s = uuid.UUID(d_s)
     #d_e = uuid.UUID(d_e)
-    select_stmt = '''SELECT {}
-        from {}
-        where log_date >= ? and log_date <= ? 
-        {};'''
-    return (select_stmt)
+    select_stmt = "SELECT * from {} where log_date >= maxTimeuuid('"+d_s+"') and log_date <= minTimeuuid('"+d_e+"') {};"
+    #print(select_stmt)
     acc = account 
-    a = accountstartup;
+    a = account
     stmt = session.prepare(select_stmt)
-    return session.execute(stmt, [d_s, d_e, {}])
+    return session.execute(stmt, [ {}])
 """
     get_method_names = []
     for table_name in TABLE_NAMES:
         get_x = get_template.format(table_name,
             ",".join([x for x in SHORTENED_TABLE_PARAMETERS[table_name] if x != "d" ]) ,  
-            ",".join(FULL_PARAMETERS[table_name]) ,
+            #",".join(FULL_PARAMETERS[table_name]) ,
             f"{table_name}",
             " and " + " and ".join(
             list( map( lambda x : f"{x} = ?" , [ x for x in FULL_PARAMETERS[table_name] if x !="log_date"] ) )
@@ -210,6 +209,15 @@ def get_{}( account, d_s, d_e, {}):
     #print_my_functions()
         
     
+def get_all_logs(account):
+    start_dt = datetime.datetime(1970, 1, 1, 0, 0, 0)
+    end_dt = datetime.datetime(2999, 9, 9, 23, 59, 59)
+
+    start_dt_str = start_dt.strftime('%Y-%m-%d %H:%M:%S')
+    end_dt_str = end_dt.strftime('%Y-%m-%d %H:%M:%S')
+    start_timestamp = int(start_dt.timestamp())  # Timestamp in seconds
+    end_timestamp = int(end_dt.timestamp())  # Timestamp in seconds
+    return get_log_by_a_d(account, start_dt_str, end_dt_str)
 
 def get_session():
     """
