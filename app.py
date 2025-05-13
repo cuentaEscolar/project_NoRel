@@ -3,12 +3,23 @@ import Conexion.mongo_model as mm
 import Conexion.cassandra_model as cm
 import Conexion.dgraph_queries as dq
 import Conexion.dgraph_connection as dc
+import Conexion.printing_utils as pu
 
 import json
 from Conexion.dgraph_connection import DgraphConnection
 from Conexion.dgraph_loader import load_data_to_dgraph
 import Conexion.dgraph_queries
 import os
+from datetime import datetime
+import time
+import uuid
+
+
+def print_dict(x):
+    for k in x.keys():
+        print(f"{k}: {x[k]}")
+    print("="*50)
+
 
 def set_username():
     username = input('Ingresa tu username: ')
@@ -249,6 +260,47 @@ def select_opc_menu_configuraciones(id_casa, option_conf):
         estado_config = input("Ingresar estado (activo o desactivo). ENTER para OMITIR: ")
         mq.get_config_por_estado(id_casa, estado_config)
 
+def manage_date():
+    ...
+
+def house_selector(username):
+    print("Seleccionar Casa")
+    user = Conexion.mongo_queries.get_usuario_info(username)
+    num_casa = -1
+    houses = user[0]['casas']
+    hr = pu.house_reader(houses)
+    while num_casa not in hr:
+        print(pu.nice_house_format(houses))
+        print("")
+        num_casa = int(input('Selecciona una casa'))
+    return hr[num_casa]
+    ...
+
+
+
+def menu_cassandra(session, username):
+
+    get_methods = cm.create_gets(session)
+    id_casa = house_selector(username)
+    print("")
+    print(id_casa)
+    print(get_methods)
+    manage_date()
+    c_menu = make_menu(
+        f"""Mostrar todos los logs de la casa
+Buscar logs para una fecha
+Buscar logs entre un par de fechas
+Busqueda avanzada """.split("\n")
+        
+    )()
+    print("")
+    query_type = int(input())
+
+    if query_type == 1:
+        user_id = Conexion.mongo_queries.get_usuario_info(username)[0]['_id']
+        pu.logs_unpacker(cm.get_all_logs(id_casa))
+
+
 def main():
     #ingresar username para poder usar la app
     username = set_username()
@@ -264,6 +316,7 @@ def main():
     while(True):
         print_menu()
         option = int(input('Ingresa una opción: '))
+
         if option == 0:
             #poblar bases de datos
 
@@ -274,9 +327,13 @@ def main():
             print("Datos subidos a DGraph")
             ...
         if option == 1:
-            mq.get_usuario_info(username)
+            users = Conexion.mongo_queries.get_usuario_info(username)
+            for user in users:
+                pu.user_printer(user)
+
         if option == 2:
             #mostrar menu de Cassandra
+            menu_cassandra(cassandra_session, username)
             ...
         if option == 3:
             num_casa = set_num_casa()

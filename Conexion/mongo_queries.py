@@ -37,6 +37,7 @@ def crear_match(id_casa, tipo, estado):
 #1.Info del usuario 	
 def get_usuario_info(usuario):
     data = Conexion.mongo_gets.get_x("/usuarios",username = usuario)
+    return data
     for user in data:
         print_dict(user)
 

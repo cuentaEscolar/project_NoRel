@@ -1,4 +1,59 @@
 from functools import reduce
+from cassandra.util import unix_time_from_uuid1
+from datetime import datetime
+
+
+
+#Row(account='68222538324d9acdbb4c5f7b', log_date=UUID('77c4ae02-2cdb-11f0-b8f7-f3e38481b747'))
+def logs_unpacker(res):
+
+    """Row(account='68222538324d9acdbb4c5f7b'
+    , log_date=UUID('9621ae02-2cc9-11f0-b8cd-8cd0895c73c3')✔️
+    , comment=''
+    , device=UUID('88550b2c-1c96-5bf9-9879-e23d65f30ae2')✔️
+    , device_type='bombilla'✔️
+    , unit='kWh'✔️
+    , value='0.007')✔️
+    """
+
+    for log in res:
+        tp = ""
+        date = datetime.utcfromtimestamp(unix_time_from_uuid1(log.log_date)).strftime('%Y-%m-%d %H:%M:%S')
+        type_ = log.device_type 
+        unit = log.unit
+        value = log.value
+        device_id = str(log.device)
+        tp += "|".join([f"{date=}",
+                        f"type={type_}",
+                        f"type={unit}",
+                        f"{value=}",
+                        f"{device_id=}",
+                        ]
+                       )
+
+        print(tp)
+
+def user_printer(x):
+    print(f"""
+ID: {x['_id']}
+Usuario: {x['username']}
+Correo: {x['correo']}
+Casas: {nice_house_format(x['casas'])}
+    """
+          )
+
+def nice_house_format(houses):
+
+    #house_to_id = house_reader(houses)
+    res = "\n\t".join( list( map(  lambda h: f"Casa #{h['num_casa']} : ID: {h['id_casa']}", houses) ) )
+    return "\n\t" + res
+
+def house_reader(houses):
+    #x is a dict
+    house_to_id = { x['num_casa']: x['id_casa']  for x in houses}
+
+    return house_to_id
+
 
 def coerce_to_string(x):
     if not x : 
