@@ -332,7 +332,7 @@ Busqueda avanzada """.split("\n")
         d_s, d_e = manage_date()
         pu.logs_unpacker(cm.get_log_by_a_d(id_casa, d_s, d_e))
 
-    if query_type == 2
+    if query_type == 2:
         adv_queries(session, id_casa)
         
 
@@ -355,12 +355,6 @@ def main():
 
         if option == 0:
             #poblar bases de datos
-
-            # Dgraph
-            base_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dataGen')
-            connection = DgraphConnection()
-            uids = load_data_to_dgraph(base_path, connection) # Cargar los datos
-            print("Datos subidos a DGraph")
             ...
         if option == 1:
             users = Conexion.mongo_queries.get_usuario_info(username)
