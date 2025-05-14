@@ -267,7 +267,7 @@ def select_opc_menu_configuraciones(id_casa, option_conf):
 
 def house_selector(username):
     print("Seleccionar Casa")
-    user = Conexion.mongo_queries.get_usuario_info(username)
+    user = mq.get_usuario_info(username)
     num_casa = -1
     houses = user[0]['casas']
     hr = pu.house_reader(houses)
@@ -419,7 +419,7 @@ def main():
             gen.main()
             #poblar bases de datos
         if option == 1:
-            users = Conexion.mongo_queries.get_usuario_info(username)
+            users = mq.get_usuario_info(username)
             for user in users:
                 pu.user_printer(user)
 
