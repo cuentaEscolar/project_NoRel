@@ -42,8 +42,8 @@ TABLE_TEMPLATE = """
         unit TEXT,
         value TEXT,
         comment TEXT,
-        PRIMARY KEY ((account), log_date {} )
-    ) WITH CLUSTERING ORDER BY (  log_date DESC {})
+        PRIMARY KEY ((account), {} log_date  )
+    ) WITH CLUSTERING ORDER BY ( {}  log_date DESC )
 """
 
 SELECT_TEMPLATE = """
@@ -88,6 +88,7 @@ TABLE_NAMES = [
     "log_by_a_d_de_u_v"
 ]
 SHORTENED_TABLE_PARAMETERS = { table : list(map( lambda x: x, (table.split("_"))[4:])) for table in TABLE_NAMES}
+EXTENDED_SHORTENED_TABLE_PARAMETERS = { table : list(map( lambda x: x, (table.split("_"))[2:])) for table in TABLE_NAMES}
 TABLE_PARAMETERS = { table : list(map( FULLNAMER, (table.split("_"))[4:])) for table in TABLE_NAMES}
 FULL_PARAMETERS = { table : list(map( FULLNAMER, (table.split("_"))[2:])) for table in TABLE_NAMES}
 FULL_PARAMETERS_ES = { table : list(map( FULLNAMER_ES, (table.split("_"))[2:])) for table in TABLE_NAMES}
@@ -106,9 +107,9 @@ def gen_tables( ):
     return  {
         table: 
         TABLE_TEMPLATE.format(table, 
-            (lambda x:  "," + x if x else x)( ",".join( TABLE_PARAMETERS[table] ))
+            (lambda x:   x+  ","if x else x)( ",".join( TABLE_PARAMETERS[table] ))
             , 
-            (lambda x: "," + x + " DESC " if x else x )( " DESC ,".join(  TABLE_PARAMETERS[table]))
+            (lambda x:  x+ " DESC ,"  if x else x )( " DESC ,".join(  TABLE_PARAMETERS[table]))
         )
         for table in TABLE_NAMES
     }
@@ -199,7 +200,7 @@ def get_{}( account, d_s, d_e, {}):
             " and " + " and ".join(
             list( map( lambda x : f"{x} = ?" , [ x for x in FULL_PARAMETERS[table_name] if x !="log_date"] ) )
             ) ,
-            ",".join([ x for x in SHORTENED_TABLE_PARAMETERS[table_name] if x !="log_date"]) + "a"
+            "a,"+",".join([ x for x in SHORTENED_TABLE_PARAMETERS[table_name] if x !="log_date"]) 
                                     )
         #print(help(curry_session))
         #exec( call_template.format(table_name, ",".join( ["0"]* (2+len(SHORTENED_TABLE_PARAMETERS[table_name])) ) )  )

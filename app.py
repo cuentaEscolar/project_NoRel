@@ -4,6 +4,7 @@ import Conexion.cassandra_model as cm
 import Conexion.dgraph_queries as dq
 import Conexion.dgraph_connection as dc
 import Conexion.printing_utils as pu
+import dataGen.generator as gen
 
 import json
 from Conexion.dgraph_connection import DgraphConnection
@@ -279,7 +280,6 @@ def manage_date():
     print("Elegir un tipo de fecha")
     d_menu = make_menu(f"""Ultimo mes
 Hoy
-Hace X Dias
 Par de fechas arbitrarias""".split("\n")
     )()
 
@@ -306,17 +306,83 @@ Par de fechas arbitrarias""".split("\n")
         #r += " 00:00:00"
         return f"{pu.esc(l)}|{pu.esc(r)}+1d".split("|")
 
+def manage_unit():
+    return ""
 
         
+def manage_device():
+    return input("Insertar id del dispositivo\n")
+
+def manage_yn(s, yes_val, next_menu):
+
+    x = input(s)
+    print("")
+
+    if x in "y|si|Y|Si|sI".split("|"):
+        return yes_val, next_menu()
+
+    return "", ""
+
+def manage_value():
+    return ""
 
 def adv_queries(session, account):
+    """
+    TABLE_NAMES = [
+        "log_by_a_d",
+        "log_by_a_d_de",
+        "log_by_a_d_u",
+        "log_by_a_d_u_v",
+        "log_by_a_d_de_u",
+        "log_by_a_d_de_u_v"
+    ]
 
+    SHORTNAME_VALUES_ES = {
+        "a": "cuenta" ,
+        "d":  "fecha_del_log",
+        "de": "dispositivo" ,
+        "u": "unidad" ,
+        "v": "valor"
+        }
+
+         'get_log_by_a_d'
+		 'get_log_by_a_d_de'
+		 'get_log_by_a_d_u'
+		 'get_log_by_a_d_u_v'
+		 'get_log_by_a_d_de_u'
+		 'get_log_by_a_d_de_u_v'
+    """
     d_s, d_e = manage_date()
+    
+    de_par, de_val = manage_yn("Hacer busqueda por dispositivo: y/N", "_de", manage_device  )
+    u_par , u_val = manage_yn("Hacer busqueda por tipo de sensor: y/N", "_u", manage_unit ) 
+    v_par , v_val = manage_yn("Hacer busqueda por valor: y/N", "_v", manage_value ) 
+    if de_val : 
+        de_val = uuid.UUID(de_val)
+    u_val, v_val = map(lambda x : "," + pu.esc(x) if x else x,  ( u_val, v_val) )
+    """
+    3
+    4
+    y
+    6ef51108-577b-5b22-8cb1-2d6e8b391509
+    """
+    unused_var = None
+    get_method = f"cm.get_log_by_a_d{de_par}{u_par}{v_par}(account, d_s, d_e "
+    if de_par: 
+        get_method += ", de_val"
+    if u_val: 
+        get_method += ", u_val"
+    if v_val: 
+        get_method += ", v_val"
+    get_method   += ")"
+
+    return eval(get_method)
     
 
 def menu_cassandra(session, username):
 
     get_methods = cm.create_gets(session)
+    print(get_methods)
     id_casa = house_selector(username)
     print("")
     c_menu = make_menu(
@@ -334,8 +400,8 @@ Busqueda avanzada """.split("\n")
         d_s, d_e = manage_date()
         pu.logs_unpacker(cm.get_log_by_a_d(id_casa, d_s, d_e))
 
-    if query_type == 2
-        adv_queries(session, id_casa)
+    if query_type == 3:
+        pu.logs_unpacker(adv_queries(session, id_casa))
         
 
 
@@ -346,24 +412,14 @@ def main():
     cassandra_session = cm.get_session()
     dgraph_session = dc.DgraphConnection.initialize_dgraph()
 
-    print(mongo_session)
-    print(cassandra_session)
-    print(dgraph_session)
-
-
     while(True):
         print_menu()
         option = int(input('Ingresa una opción: '))
 
         if option == 0:
+            gen.main()
             #poblar bases de datos
 
-            # Dgraph
-            base_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dataGen')
-            connection = DgraphConnection()
-            uids = load_data_to_dgraph(base_path, connection) # Cargar los datos
-            print("Datos subidos a DGraph")
-            ...
         if option == 1:
             users = Conexion.mongo_queries.get_usuario_info(username)
             for user in users:

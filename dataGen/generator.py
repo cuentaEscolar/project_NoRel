@@ -7,7 +7,7 @@ import random
 from datetime import datetime, timedelta
 from cassandra.util import uuid_from_time
 from Conexion import cassandra_model
-from Conexion.printing_cassandra_utils import coerce_to_string
+from Conexion.printing_utils import coerce_to_string
 from Conexion.mongo_gets import get_x
 from Conexion.mongo_model import get_session
 
