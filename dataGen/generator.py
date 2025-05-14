@@ -391,7 +391,7 @@ def generar_datos_dgraph():
             for hab in habitaciones:
                 if random.random() > 0.3:  # 70% probabilidad de tener cluster
                     cluster_id = f"cluster_{casa_id}_{hab}"
-                    writer_clusters.writerow([cluster_id, "cluster", "habitacion", f"{hab.capitalize()}_{casa_id}"])
+                    writer_clusters.writerow([cluster_id, hab, "habitacion", f"{hab.capitalize()}_{casa_id}"])
                     
                     writer_rel.writerow([cluster_id, "pertenece_a", f"casa_{casa_id}"])
                     
@@ -405,7 +405,7 @@ def generar_datos_dgraph():
             for tipo in tipos_funcionales:
                 if random.random() > 0.5:  # 50% probabilidad de tener cluster
                     cluster_id = f"cluster_{casa_id}_{tipo}"
-                    writer_clusters.writerow([cluster_id, "cluster", "funcional", f"{tipo.capitalize()}_{casa_id}"])
+                    writer_clusters.writerow([cluster_id, tipo, "funcional", f"{tipo.capitalize()}_{casa_id}"])
                     
                     writer_rel.writerow([cluster_id, "pertenece_a", f"casa_{casa_id}"])
                     

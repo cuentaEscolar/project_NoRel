@@ -289,38 +289,52 @@ def dispositivos_sincronizados(client, casa_id):
     res = client.txn(read_only=True).query(query, variables=variables)
     return json.loads(res.json)
 
-# 14.- Los usuarios deben poder filtrar los dispositivos que están en el mismo cluster funcional.
+# 14.- Los usuarios deben poder ver los clusters de una casa (tanto funcionales como de habitación)
+def clusters(client, casa_id):
+    """
+    Los usuarios deben poder filtrar todos los clusters de una casa
+    """
+    query = """query clusters($casa_id: string) {
+        casa(func: eq(id_casa, $casa_id)) {
+            id_casa
+            nombre
+            clusters: ~pertenece_a {
+                tipo
+                categoria
+                nombre
+            }
+        }
+    }"""
+    
+    variables = {'$casa_id': casa_id}
+    res = client.txn(read_only=True).query(query, variables=variables)
+    return json.loads(res.json)
+
+# 15.- Los usuarios deben poder filtrar los dispositivos que están en el mismo cluster funcional.
 def dispositivos_cluster_funcional(client, casa_id, tipo_funcional):
     """
-    Los usuarios deben poder filtrar los dispositivos que están en el mismo cluster funcional (iluminación, climatización, etc).
-    Regresa los clusters del tipo especificado y sus dispositivos
+    Los usuarios deben poder filtrar los dispositivos que están en el mismo cluster funcional.
     """
-    query = """query dispositivos_cluster($casa_id: string, $tipo: string) {
+    query = """query clusters_casa($casa_id: string, $tipo_funcional: string) {
         casa(func: eq(id_casa, $casa_id)) {
-            tiene_dispositivos {
-                id_dispositivo
+            id_casa
+            nombre
+            clusters: ~pertenece_a @filter(eq(tipo, $tipo_funcional)) {
+                tipo
                 categoria
-                estado
-                ubicacion
-                ~contiene_dispositivos @filter(eq(tipo, $tipo)) {
-                    tipo
+                nombre
+                disps: agrupa_dispositivos {
+                    id_dispositivo
                     categoria
-                    nombre
-                    # Obtenemos todos los dispositivos del mismo cluster
-                    contiene_dispositivos {
-                        id_dispositivo
-                        categoria
-                        estado
-                        ubicacion
-                    }
+                    estado
+                    ubicacion
+                    temperatura
+                    modo
                 }
             }
         }
     }"""
     
-    variables = {
-        '$casa_id': casa_id,
-        '$tipo': tipo_funcional
-    }
+    variables = {'$casa_id': casa_id, '$tipo_funcional': tipo_funcional}
     res = client.txn(read_only=True).query(query, variables=variables)
     return json.loads(res.json)

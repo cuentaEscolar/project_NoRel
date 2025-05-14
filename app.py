@@ -97,8 +97,9 @@ def print_dgraph_menu():
         11: "Dispositivos en standy",
         12: "Dispositivos en habitación",
         13: "Dispositivos sincronizados entre sí",
-        14: "Dispositivos en cluster funcional",
-        15: "Regresar a menú principal"
+        14: "Clusters en una casa",
+        15: "Dispositivos en cluster funcional",
+        16: "Regresar a menú principal"
     }
     for key in options.keys():
         print('    ', key, '--', options[key])
@@ -168,11 +169,13 @@ def select_opc_menu_relaciones(client, option):
         casa_id = 'casa_'+(input("Ingresa el id de la casa: "))
         print_dgraph_query_result("Dispositivos Sincronizados", dq.dispositivos_sincronizados(client, casa_id))
     if option == 14:
+        # Todos los clusters de una casa
+        casa_id = 'casa_'+(input("Ingresa el id de la casa: "))
+        print_dgraph_query_result("Clusters en casa", dq.clusters(client, casa_id))
+    if option == 15:
         # Dispositivos en cluster funcional
-        casa_id = input("Ingresa el id de la casa: ")
-        print(casa_id)
-        tipo_funcional = input("Ingresa el tipo de cluster funcional (ej: Climatización, Seguridad, etc): ")
-        print(tipo_funcional)
+        casa_id = 'casa_'+(input("Ingresa el id de la casa: "))
+        tipo_funcional = input("Ingresa el tipo de cluster funcional (iluminacion, climatizacion, seguridad o entretenimiento): ")
         print_dgraph_query_result("Dispositivos por Cluster Funcional", dq.dispositivos_cluster_funcional(client, casa_id, tipo_funcional))
 
 def print_opcion_dispositivos():
@@ -419,7 +422,6 @@ def main():
         if option == 0:
             gen.main()
             #poblar bases de datos
-
         if option == 1:
             users = Conexion.mongo_queries.get_usuario_info(username)
             for user in users:
@@ -464,7 +466,7 @@ def main():
                 print("Menú de relaciones de dispositivos\n")
                 print_dgraph_menu()
                 option = int(input('Ingresa una opción: '))
-                if option == 15:
+                if option == 16:
                     break
                 select_opc_menu_relaciones(dgraph_session, option)
         if option == 6:
