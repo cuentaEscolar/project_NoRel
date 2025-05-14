@@ -310,6 +310,21 @@ Par de fechas arbitrarias""".split("\n")
         return f"{pu.esc(l)}|{pu.esc(r)}+1d".split("|")
 
 def manage_unit():
+
+    s = set(( "celsius", "kWh", "locacion", "state", "on_time"))     
+    s.update(("kWh", "state", "on_time"))
+    s.update(('intentos_forcejeo', "hora_apertura"))
+    s.update(("kWh", "celsius", "door_open_time"))
+    s.update(("kWh", "ruta", "state"))
+    keys = list(s)
+    keys.sort()
+    make_menu(keys)()
+    print("")
+    o = int(input("Seleccionar un tipo de unidad\n"))
+    print(o)
+    if 0 < o <= len(keys):
+        return keys[o]
+
     return ""
 
         
@@ -327,33 +342,16 @@ def manage_yn(s, yes_val, next_menu):
     return "", ""
 
 def manage_value():
+    return input("Escribe el valor deseado\n")
     return ""
 
 def adv_queries(session, account):
     """
-    TABLE_NAMES = [
-        "log_by_a_d",
-        "log_by_a_d_de",
-        "log_by_a_d_u",
-        "log_by_a_d_u_v",
-        "log_by_a_d_de_u",
-        "log_by_a_d_de_u_v"
-    ]
-
-    SHORTNAME_VALUES_ES = {
-        "a": "cuenta" ,
-        "d":  "fecha_del_log",
-        "de": "dispositivo" ,
-        "u": "unidad" ,
-        "v": "valor"
-        }
-
-         'get_log_by_a_d'
-		 'get_log_by_a_d_de'
-		 'get_log_by_a_d_u'
-		 'get_log_by_a_d_u_v'
-		 'get_log_by_a_d_de_u'
-		 'get_log_by_a_d_de_u_v'
+        "aire_acondicionado": ( "celsius", "kWh", "locacion", "state", "on_time")     ,
+        "bombilla": ("kWh", "state", "on_time"),
+        "cerradura": ('intentos_forcejeo', "hora_apertura"),
+        "refrigerador": ("kWh", "celsius", "door_open_time"),
+        "aspiradora" : ("kWh", "ruta", "state")
     """
     d_s, d_e = manage_date()
     
@@ -362,14 +360,12 @@ def adv_queries(session, account):
     v_par , v_val = manage_yn("Hacer busqueda por valor: y/N", "_v", manage_value ) 
     if de_val : 
         de_val = uuid.UUID(de_val)
-    u_val, v_val = map(lambda x : "," + pu.esc(x) if x else x,  ( u_val, v_val) )
     """
     3
     4
     y
     6ef51108-577b-5b22-8cb1-2d6e8b391509
     """
-    unused_var = None
     get_method = f"cm.get_log_by_a_d{de_par}{u_par}{v_par}(account, d_s, d_e "
     if de_par: 
         get_method += ", de_val"
