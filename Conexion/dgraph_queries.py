@@ -1,6 +1,21 @@
 import json
 import pydgraph
 
+# 0.- Ver todas las casas con información básica y su UID
+def casas(client):
+    """
+    Los usuarios deben poder ver todas las casas de la base de datos.
+    """
+    query = """query todas_las_casas {
+        casas(func: has(id_casa)) {
+            id_casa
+            nombre
+        }
+    }"""
+    
+    res = client.txn(read_only=True).query(query)
+    return json.loads(res.json)
+
 # 1.- Los usuarios deben poder filtrar los dispositivos que pertenecen a una casa en específico.
 def dispositivos_en_casa(client, casa_id):
     """
@@ -298,7 +313,7 @@ def clusters(client, casa_id):
         casa(func: eq(id_casa, $casa_id)) {
             id_casa
             nombre
-            clusters: ~pertenece_a {
+            clusters: ~pertenece_a @filter(eq(categoria, "funcional")) {
                 tipo
                 categoria
                 nombre

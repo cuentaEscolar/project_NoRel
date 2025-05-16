@@ -360,7 +360,7 @@ def generar_datos_dgraph():
         for casa_id in range(1, num_casas + 1):
             # Escribir datos de la casa
             casa_id_str = f"casa_{casa_id}"
-            writer_casas.writerow([casa_id_str, f"Casa {casa_id}"])
+            #writer_casas.writerow([casa_id_str, f"Casa {casa_id}"])
             
             # Filtrar dispositivos de esta casa
             disp_casa = []

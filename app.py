@@ -84,7 +84,8 @@ def print_mongo_menu_configuraciones():
 
 def print_dgraph_menu():
     options = {
-        1: "Dipositivos de una casa",
+        0: "Mostrar todas las casas",
+        1: "Dispositivos de una casa",
         2: "Aires acondicionados de una casa",
         3: "Bombillas de una casa",
         4: "Aspiradoras de una casa",
@@ -94,7 +95,7 @@ def print_dgraph_menu():
         8: "Dispositivos apagados",
         9: "Dispositivos en modo eco",
         10: "Dispositivos en estado de error",
-        11: "Dispositivos en standy",
+        11: "Dispositivos en standby",
         12: "Dispositivos en habitación",
         13: "Dispositivos sincronizados entre sí",
         14: "Clusters en una casa",
@@ -115,6 +116,9 @@ def print_dgraph_query_result(query_name, result):
     print("="*50 + "\n")
 
 def select_opc_menu_relaciones(client, option):
+    if option == 0:
+        # Todas las casas
+        print_dgraph_query_result("Todas las casas", dq.casas(client))
     if option == 1:
         # Dipositivos de una casa
         casa_id = 'casa_'+(input("Ingresa el id de la casa: "))
