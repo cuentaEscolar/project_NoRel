@@ -336,86 +336,67 @@ def generar_datos_dgraph():
         
         # Leer dispositivos existentes del archivo MongoDB
         dispositivos = []
-        casas_ids = set()  # Conjunto para almacenar los IDs de casas únicos
+        casas_ids = set()  # IDs de casas únicos desde MongoDB
         with open("dataGen/mongo_dispositivos.csv", "r", newline="", encoding="utf-8") as f_mongo_disp:
             reader = csv.DictReader(f_mongo_disp)
             for row in reader:
                 dispositivos.append((row["id_dispositivo"], row["tipo_dispositivo"], row["id_casa"]))
-                casas_ids.add(row["id_casa"])  # Añadir el ID de la casa
-        
-        # Escribir las casas usando los IDs de Mongo
-        for casa_id in casas_ids:
-            casa_id_str = f"casa_{casa_id}"
-            writer_casas.writerow([casa_id_str, f"Casa {casa_id}"])
-        
+                casas_ids.add(row["id_casa"])  # <--- IDs reales desde MongoDB
+
         # Crear diccionario para agrupar dispositivos por tipo
         dispositivos_por_tipo = {}
         for id_disp, tipo_disp, casa_id in dispositivos:
             if tipo_disp not in dispositivos_por_tipo:
                 dispositivos_por_tipo[tipo_disp] = []
             dispositivos_por_tipo[tipo_disp].append((id_disp, casa_id))
-        
-        # Generar datos para cada casa
-        num_casas = get_longitud_casas()[0]["count"]
-        for casa_id in range(1, num_casas + 1):
-            # Escribir datos de la casa
-            casa_id_str = f"casa_{casa_id}"
-            #writer_casas.writerow([casa_id_str, f"Casa {casa_id}"])
+
+        # Escribir las casas usando los IDs de Mongo
+        for raw_casa_id in casas_ids:
+            casa_id_str = f"casa_{raw_casa_id}"
+            writer_casas.writerow([casa_id_str, f"Casa {raw_casa_id}"])
+
+        # --- CAMBIO CLAVE: Iterar sobre los IDs reales de casas ---
+        for raw_casa_id in casas_ids:  # <--- Usar casas_ids en lugar de range()
+            casa_id_str = f"casa_{raw_casa_id}"
             
-            # Filtrar dispositivos de esta casa
-            disp_casa = []
-            for id_disp, tipo_disp, casa_id in dispositivos:
-                # Escribir dispositivos y su relación con la casa
-                # Generar datos específicos según el tipo de dispositivo
-                estado = generar_estado_aleatorio()
-                temp = generar_temperatura_aleatoria() if tipo_disp in ["aire_acondicionado", "refrigerador"] else ""
-                modo = random.choice(["auto", "manual"]) if tipo_disp == "aire_acondicionado" else ""
-                ubicacion = generar_locacion_aleatoria() if tipo_disp in ["aire_acondicionado", "bombilla", "cerradura"] else ""
-                brillo = f"{random.randint(10, 100)}%" if tipo_disp == "bombilla" else ""
-                color = generar_color_aleatorio() if tipo_disp == "bombilla" else ""
-                potencia = random.randint(1, 3) if tipo_disp == "aspiradora" else ""
-                ruta = generar_ruta_aleatoria() if tipo_disp == "aspiradora" else ""
-                
-                # Escribir dispositivo
-                writer_disp.writerow([id_disp, tipo_disp, estado, temp, modo, ubicacion, 
-                                    brillo, color, potencia, ruta])
-                
-                # Escribir relación casa-dispositivo
-                writer_rel.writerow([f"casa_{casa_id}", "tiene_dispositivos", id_disp])
-                
-                if casa_id == str(casa_id):  # Si el dispositivo pertenece a esta casa
-                    disp_casa.append((id_disp, tipo_disp, casa_id))
-            
+            # Filtrar dispositivos de ESTA casa específica
+            disp_casa = [
+                (id_disp, tipo_disp, casa_id) 
+                for id_disp, tipo_disp, casa_id in dispositivos 
+                if casa_id == raw_casa_id 
+            ]
+
             # Generar clusters por habitación
             habitaciones = ["sala", "cocina", "dormitorio_principal", "baño"]
             for hab in habitaciones:
-                if random.random() > 0.3:  # 70% probabilidad de tener cluster
-                    cluster_id = f"cluster_{casa_id}_{hab}"
-                    writer_clusters.writerow([cluster_id, hab, "habitacion", f"{hab.capitalize()}_{casa_id}"])
-                    
-                    writer_rel.writerow([cluster_id, "pertenece_a", f"casa_{casa_id}"])
-                    
-                    # Asignar dispositivos al cluster según ubicación
+                if random.random() > 0.3:
+                    cluster_id = f"cluster_{raw_casa_id}_{hab}"  # <--- ID único por casa
+                    writer_clusters.writerow([cluster_id, hab, "habitacion", f"{hab.capitalize()}_{raw_casa_id}"])
+                    writer_rel.writerow([cluster_id, "pertenece_a", casa_id_str])  # <--- Relación correcta
+
+                    # Asignar dispositivos al cluster
                     for id_disp, tipo_disp, _ in disp_casa:
-                        if random.random() > 0.3:  # 70% probabilidad de asignación
+                        if random.random() > 0.3:
                             writer_rel.writerow([cluster_id, "contiene_dispositivos", id_disp])
-            
+
             # Generar clusters funcionales
             tipos_funcionales = ["iluminacion", "climatizacion", "seguridad", "entretenimiento"]
             for tipo in tipos_funcionales:
-                if random.random() > 0.5:  # 50% probabilidad de tener cluster
-                    cluster_id = f"cluster_{casa_id}_{tipo}"
-                    writer_clusters.writerow([cluster_id, tipo, "funcional", f"{tipo.capitalize()}_{casa_id}"])
-                    
-                    writer_rel.writerow([cluster_id, "pertenece_a", f"casa_{casa_id}"])
-                    
+                if random.random() > 0.5:
+                    cluster_id = f"cluster_{raw_casa_id}_{tipo}"  # <--- ID único por casa
+                    writer_clusters.writerow([cluster_id, tipo, "funcional", f"{tipo.capitalize()}_{raw_casa_id}"])
+                    writer_rel.writerow([cluster_id, "pertenece_a", casa_id_str])  # <--- Relación correcta
+
                     # Asignar dispositivos según función
                     for id_disp, tipo_disp, _ in disp_casa:
-                        if ((tipo == "iluminacion" and tipo_disp == "bombilla") or
+                        if (
+                            (tipo == "iluminacion" and tipo_disp == "bombilla") or
                             (tipo == "climatizacion" and tipo_disp in ["aire_acondicionado", "refrigerador"]) or
-                            (tipo == "seguridad" and tipo_disp == "cerradura")):
-                            if random.random() > 0.3:  # 70% probabilidad de asignación
+                            (tipo == "seguridad" and tipo_disp == "cerradura")
+                        ):
+                            if random.random() > 0.3:
                                 writer_rel.writerow([cluster_id, "agrupa_dispositivos", id_disp])
+
 
         # Generar relaciones de sincronización entre dispositivos del mismo tipo
         for tipo_disp, lista_dispositivos in dispositivos_por_tipo.items():
